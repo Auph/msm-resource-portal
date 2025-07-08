@@ -10,8 +10,8 @@
     "build": "strapi build",
     "strapi": "strapi"
   },
-  "devDependencies": {},
   "dependencies": {
+    "cross-env": "^7.0.3",
     "knex": "<0.20.0",
     "pg": "^8.5.0",
     "strapi": "3.6.5",
@@ -34,9 +34,9 @@
   "strapi": {
     "uuid": "07e88e11-542f-497d-a916-9d3d6c6df29e"
   },
-"engines": {
-  "node": ">=14.0.0",
-  "npm": ">=6.0.0"
-},
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
   "license": "MIT"
 }

@@ -54,6 +54,7 @@ module.exports = configure(function (ctx) {
     build: {
       vueRouterMode: 'history', // available values: 'hash', 'history'
       env: {
+        //apiUrl: 'http://localhost:1337' || 'https://content.msmusic.edu.sg',
         apiUrl: process.env.apiUrl || 'https://content.msmusic.edu.sg',
         hotjarId: process.env.hotjarId || null
       },
@@ -75,15 +76,15 @@ module.exports = configure(function (ctx) {
       // extractCSS: false,
 
       // https://quasar.dev/quasar-cli/handling-webpack
-      extendWebpack (cfg) {
-          // linting is slow in TS projects, we execute it only for production builds
+      extendWebpack(cfg) {
+        // linting is slow in TS projects, we execute it only for production builds
         if (ctx.prod) {
-        cfg.module.rules.push({
-          enforce: 'pre',
-          test: /\.(js|vue)$/,
-          loader: 'eslint-loader',
-          exclude: /node_modules/
-        })
+          cfg.module.rules.push({
+            enforce: 'pre',
+            test: /\.(js|vue)$/,
+            loader: 'eslint-loader',
+            exclude: /node_modules/
+          })
         }
       },
     },
@@ -201,7 +202,7 @@ module.exports = configure(function (ctx) {
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
       nodeIntegration: true,
 
-      extendWebpack (/* cfg */) {
+      extendWebpack(/* cfg */) {
         // do something with Electron main process Webpack cfg
         // chainWebpack also available besides this extendWebpack
       }
