@@ -2,169 +2,189 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import axios, { AxiosResponse } from 'axios'
-import { reactive } from '@vue/composition-api'
-import qs from 'qs'
+import axios, { AxiosResponse } from 'axios';
+import { reactive } from '@vue/composition-api';
+import qs from 'qs';
 
-import config from '../config/config'
+import config from '../config/config';
 
 //  Dummy data
 // import itemsData from '../data/items.data'
-import { InterfaceItem, InterfaceItemMediaObject, InterfaceStateItems } from 'src/interfaces'
-import { getAuthenticationToken } from './authentication'
+import {
+  InterfaceItem,
+  InterfaceItemMediaObject,
+  InterfaceStateItems
+} from 'src/interfaces';
+import { getAuthenticationToken } from './authentication';
 
 const packageItem = (item: InterfaceItem) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const packagedItem: InterfaceItem = JSON.parse(JSON.stringify(item))
+  const packagedItem: InterfaceItem = JSON.parse(JSON.stringify(item));
 
-  return packagedItem
-}
+  return packagedItem;
+};
 
 /**
  * Fetches data. Should ideally be abstracted
  */
 const fetchItems = async (
-    categories = ['all'],
-    tags: number[] = [],
-    seriesItems = ['all'],
-    search = ''
-  ): Promise<InterfaceItem[]|undefined> => {
+  categories = ['all'],
+  tags: number[] = [],
+  seriesItems = ['all'],
+  search = ''
+): Promise<InterfaceItem[] | undefined> => {
   try {
     if ('apiUrl' in config) {
       //  creates the query
       const queryOptions: Record<string, any> = {
-        _where : [
-        ]
-      }
+        _where: []
+      };
       if (categories.indexOf('all') === -1) {
         queryOptions._where.push({
-          categories,
-        })
+          categories
+        });
       }
       if (tags.length > 0) {
         queryOptions._where.push({
-          tags_in: tags,
-        })
+          tags_in: tags
+        });
       }
       if (seriesItems.indexOf('all') === -1) {
         queryOptions._where.push({
-          series_items: seriesItems,
-        })
+          series_items: seriesItems
+        });
       }
       if (search.length > 0) {
-        queryOptions._q = search
+        queryOptions._q = search;
       }
 
-      const response: AxiosResponse = await axios.get(`${config.apiUrl}/items?${qs.stringify(queryOptions)}`)
+      const response: AxiosResponse = await axios.get(
+        `${config.apiUrl}/items?${qs.stringify(queryOptions)}&populate=*`
+      );
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const items: InterfaceItem[] = response.data
-      const packagedItems: InterfaceItem[] = items.map((item: InterfaceItem) => {
-        return packageItem(item)
-      })
+      const items: InterfaceItem[] = response.data;
+      const packagedItems: InterfaceItem[] = items.map(
+        (item: InterfaceItem) => {
+          return packageItem(item);
+        }
+      );
 
-      return packagedItems
+      return packagedItems;
     }
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
-}
+};
 
-const fetchItem = async (id: string, preview = false): Promise<InterfaceItem|undefined> => {
+const fetchItem = async (
+  id: string,
+  preview = false
+): Promise<InterfaceItem | undefined> => {
   try {
     if ('apiUrl' in config) {
-      const token: string|null = await getAuthenticationToken()
-      const endpoint = preview ? `${config.apiUrl}/previewer/item/${id}` : `${config.apiUrl}/items/${id}`
+      const token: string | null = await getAuthenticationToken();
+      const endpoint = preview
+        ? `${config.apiUrl}/previewer/item/${id}?populate=*`
+        : `${config.apiUrl}/items/${id}?populate=*`;
       const response: AxiosResponse = await axios.get(endpoint, {
         headers: {
-          Authorization:
-            `Bearer ${token}`,
-        },
-      })
+          Authorization: `Bearer ${token}`
+        }
+      });
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const item: InterfaceItem = preview ? response.data.data : response.data
+      const item: InterfaceItem = preview ? response.data.data : response.data;
 
-      return packageItem(item)
+      return packageItem(item);
     }
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
-}
+};
 
-const generatePresignedItemUrl = async (hash: string): Promise<InterfaceItemMediaObject|undefined> => {
+const generatePresignedItemUrl = async (
+  hash: string
+): Promise<InterfaceItemMediaObject | undefined> => {
   try {
     if ('apiUrl' in config) {
-      const token: string|null = await getAuthenticationToken()
-      const response: AxiosResponse = await axios.get(`${config.apiUrl}/items/download/${hash}`, {
-        headers: {
-          Authorization:
-            `Bearer ${token}`,
-        },
-      })
+      const token: string | null = await getAuthenticationToken();
+      const response: AxiosResponse = await axios.get(
+        `${config.apiUrl}/items/download/${hash}?populate=*`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return response.data
+      return response.data;
     }
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
-}
+};
 
 const defaultState: InterfaceStateItems = {
   items: []
-}
+};
 
 const state = reactive({
   ...defaultState
-})
+});
 
 const useItems = () => {
   const getItems = async (
-      categories: string[] = [],
-      tags: number[] = [],
-      seriesItems: string[] = [],
-      search: string,
-    ) => {
-    const items: InterfaceItem[] | undefined = await fetchItems(categories, tags, seriesItems, search)
+    categories: string[] = [],
+    tags: number[] = [],
+    seriesItems: string[] = [],
+    search: string
+  ) => {
+    const items: InterfaceItem[] | undefined = await fetchItems(
+      categories,
+      tags,
+      seriesItems,
+      search
+    );
 
     if (items === undefined) {
-      console.error('Items is undefined')
+      console.error('Items is undefined');
     } else {
-      state.items = [...items]
-      console.log(state)
+      state.items = [...items];
+      console.log(state);
     }
 
-    return items
-  }
+    return items;
+  };
 
   const getItem = async (id: string, preview = false) => {
-    const item: InterfaceItem | undefined = await fetchItem(id, preview)
-    
+    const item: InterfaceItem | undefined = await fetchItem(id, preview);
+
     if (item === undefined) {
-      console.error(`Item ${id} is undefined`)
+      console.error(`Item ${id} is undefined`);
     } else {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const items: InterfaceItem[] = JSON.parse(JSON.stringify(state.items))
-      const itemIndex: number = items.findIndex(currentItem => String(currentItem.id) === id)
+      const items: InterfaceItem[] = JSON.parse(JSON.stringify(state.items));
+      const itemIndex: number = items.findIndex(
+        currentItem => String(currentItem.id) === id
+      );
       if (itemIndex === -1) {
-        items.push(item)
+        items.push(item);
       } else {
-        items[itemIndex] = item
+        items[itemIndex] = item;
       }
-      state.items = items
+      state.items = items;
     }
 
     return {
       ...state.items
-    }
-  }
+    };
+  };
 
   return {
     getItems,
     getItem,
     generatePresignedItemUrl,
     state
-  }
-}
+  };
+};
 
-export {
-  useItems
-}
+export { useItems };
