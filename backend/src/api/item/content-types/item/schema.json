@@ -1,0 +1,75 @@
+{
+  "kind": "collectionType",
+  "collectionName": "items",
+  "info": {
+    "singularName": "item",
+    "pluralName": "items",
+    "displayName": "Item",
+    "name": "item"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true,
+    "previewable": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description_short": {
+      "type": "string",
+      "required": true
+    },
+    "description_long": {
+      "type": "richtext"
+    },
+    "media": {
+      "type": "media",
+      "allowedTypes": [
+        "files",
+        "images",
+        "videos"
+      ],
+      "multiple": true,
+      "required": false
+    },
+    "categories": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::category.category",
+      "inversedBy": "items"
+    },
+    "tags": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tag.tag",
+      "inversedBy": "items"
+    },
+    "link": {
+      "type": "component",
+      "repeatable": true,
+      "component": "item-links.link"
+    },
+    "collections": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::collection.collection",
+      "mappedBy": "items"
+    },
+    "series_items": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::series-item.series-item",
+      "mappedBy": "items"
+    },
+    "featured_image": {
+      "type": "media",
+      "allowedTypes": [
+        "images"
+      ],
+      "multiple": false,
+      "required": false
+    }
+  }
+}

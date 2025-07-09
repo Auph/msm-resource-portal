@@ -4,29 +4,35 @@
   "version": "0.1.0",
   "description": "Resource Portal Admin",
   "scripts": {
-    "develop": "strapi build && strapi develop",
-    "dev": "npm run develop",
-    "start": "strapi start",
     "build": "strapi build",
-    "strapi": "strapi"
+    "dev": "strapi develop",
+    "start": "strapi start",
+    "console": "strapi console",
+    "deploy": "strapi deploy",
+    "develop": "strapi develop",
+    "seed:example": "node ./scripts/seed.js",
+    "strapi": "strapi",
+    "upgrade": "npx @strapi/upgrade latest",
+    "upgrade:dry": "npx @strapi/upgrade latest --dry"
   },
   "dependencies": {
+    "@strapi/plugin-users-permissions": "^5.17.0",
+    "@strapi/provider-email-sendgrid": "5.17.0",
+    "@strapi/provider-upload-aws-s3": "5.17.0",
+    "@strapi/strapi": "5.17.0",
     "cross-env": "^7.0.3",
     "knex": "<0.20.0",
-    "pg": "^8.5.0",
-    "strapi": "3.6.5",
-    "strapi-admin": "3.6.5",
-    "strapi-connector-bookshelf": "3.6.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.1",
     "strapi-plugin-ckeditor5": "^1.2.2",
-    "strapi-plugin-content-manager": "3.6.5",
-    "strapi-plugin-content-type-builder": "3.6.5",
-    "strapi-plugin-email": "3.6.5",
     "strapi-plugin-preview-content": "^1.3.1",
-    "strapi-plugin-upload": "3.6.5",
-    "strapi-plugin-users-permissions": "3.6.5",
-    "strapi-provider-email-sendgrid": "^3.6.5",
-    "strapi-provider-upload-aws-s3": "^3.6.5",
-    "strapi-utils": "3.6.5"
+    "styled-components": "^6.1.19",
+    "@strapi/plugin-cloud": "5.17.0",
+    "fs-extra": "^10.0.0",
+    "mime-types": "^2.1.27",
+    "pg": "8.8.0",
+    "@strapi/admin": "^5.17.0"
   },
   "author": {
     "name": "Indigitous Singapore"
@@ -35,7 +41,6 @@
     "uuid": "07e88e11-542f-497d-a916-9d3d6c6df29e"
   },
   "engines": {
-    "node": ">=14.0.0",
     "npm": ">=6.0.0"
   },
   "license": "MIT"

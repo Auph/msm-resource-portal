@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_item_links_links",
+  "info": {
+    "icon": "cubes",
+    "description": "",
+    "displayName": "link"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "url": {
+      "type": "string"
+    }
+  }
+}

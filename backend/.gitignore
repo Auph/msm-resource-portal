@@ -1,1 +1,4 @@
 .strapi-updater.json
+node_modules
+build
+.env

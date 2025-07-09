@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "collection_categories",
+  "info": {
+    "singularName": "collection-category",
+    "pluralName": "collection-categories",
+    "displayName": "Collection-category",
+    "name": "collection-category"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "collections": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::collection.collection",
+      "inversedBy": "collection_categories"
+    },
+    "description": {
+      "type": "string"
+    }
+  }
+}
