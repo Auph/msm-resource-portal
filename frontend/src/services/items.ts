@@ -35,34 +35,47 @@ const fetchItems = async (
 ): Promise<InterfaceItem[] | undefined> => {
   try {
     if ('apiUrl' in config) {
-      //  creates the query
       const queryOptions: Record<string, any> = {
-        _where: []
+        filters: {}
       };
-      if (categories.indexOf('all') === -1) {
-        queryOptions._where.push({
-          categories
-        });
-      }
-      if (tags.length > 0) {
-        queryOptions._where.push({
-          tags_in: tags
-        });
-      }
-      if (seriesItems.indexOf('all') === -1) {
-        queryOptions._where.push({
-          series_items: seriesItems
-        });
-      }
-      if (search.length > 0) {
-        queryOptions._q = search;
+
+      if (!categories.includes('all')) {
+        queryOptions.filters.categories = {
+          id: { $in: categories }
+        };
       }
 
-      const response: AxiosResponse = await axios.get(
-        `${config.apiUrl}/items?${qs.stringify(queryOptions)}&populate=*`
+      if (tags.length > 0) {
+        queryOptions.filters.tags = {
+          id: { $in: tags }
+        };
+      }
+
+      if (!seriesItems.includes('all')) {
+        queryOptions.filters.series_items = {
+          id: { $in: seriesItems }
+        };
+      }
+
+      if (search.length > 0) {
+        queryOptions.filters.$or = [
+          { title: { $containsi: search } },
+          { description_short: { $containsi: search } },
+          { description_long: { $containsi: search } }
+        ];
+      }
+
+      const response: AxiosResponse<{
+        data: InterfaceItem[];
+      }> = await axios.get(
+        `${
+          config.apiUrl
+        }/items?populate[link]=true&populate[media]=true&populate[featured_image]=true&populate[categories][populate][0]=featured_image&populate[tags]=true&populate[collections][populate][0]=featured_image&populate[series_items]=true&${qs.stringify(
+          queryOptions
+        )}`
       );
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const items: InterfaceItem[] = response.data;
+      const items: InterfaceItem[] = response.data.data;
       const packagedItems: InterfaceItem[] = items.map(
         (item: InterfaceItem) => {
           return packageItem(item);
@@ -84,16 +97,17 @@ const fetchItem = async (
     if ('apiUrl' in config) {
       const token: string | null = await getAuthenticationToken();
       const endpoint = preview
-        ? `${config.apiUrl}/previewer/item/${id}?populate=*`
+        ? `${config.apiUrl}/previewer/item/${id}`
         : `${config.apiUrl}/items/${id}?populate=*`;
-      const response: AxiosResponse = await axios.get(endpoint, {
+      const response: AxiosResponse<{
+        data: InterfaceItem;
+      }> = await axios.get(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const item: InterfaceItem = preview ? response.data.data : response.data;
-
+      const item: InterfaceItem = response.data.data;
       return packageItem(item);
     }
   } catch (error) {
@@ -108,7 +122,7 @@ const generatePresignedItemUrl = async (
     if ('apiUrl' in config) {
       const token: string | null = await getAuthenticationToken();
       const response: AxiosResponse = await axios.get(
-        `${config.apiUrl}/items/download/${hash}?populate=*`,
+        `${config.apiUrl}/items/download/${hash}`,
         {
           headers: {
             Authorization: `Bearer ${token}`

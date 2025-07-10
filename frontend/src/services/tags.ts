@@ -15,11 +15,12 @@ import { InterfaceTag } from 'src/interfaces';
 const fetchTags = async (): Promise<InterfaceTag[] | undefined> => {
   try {
     if ('apiUrl' in config) {
-      const response: AxiosResponse = await axios.get(
-        `${config.apiUrl}/tags?populate=*`
+      const response: AxiosResponse<{
+        data: InterfaceTag[];
+      }> = await axios.get(
+        `${config.apiUrl}/tags?populate[items][populate][0]=link&populate[items][populate][1]=media&populate[items][populate][2]=featured_image`
       );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const tags: InterfaceTag[] = response.data;
+      const tags: InterfaceTag[] = response.data.data;
       return tags;
     }
   } catch (error) {
@@ -30,11 +31,11 @@ const fetchTags = async (): Promise<InterfaceTag[] | undefined> => {
 const fetchTag = async (id: string): Promise<InterfaceTag | undefined> => {
   try {
     if ('apiUrl' in config) {
-      const response: AxiosResponse = await axios.get(
-        `${config.apiUrl}/tags/${id}?populate=*`
-      );
+      const response: AxiosResponse<{
+        data: InterfaceTag;
+      }> = await axios.get(`${config.apiUrl}/tags/${id}?populate=*`);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const tag: InterfaceTag = response.data;
+      const tag: InterfaceTag = response.data.data;
 
       return tag;
     }

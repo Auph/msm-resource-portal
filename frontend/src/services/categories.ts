@@ -15,11 +15,13 @@ import { InterfaceCategory } from 'src/interfaces';
 const fetchCategories = async (): Promise<InterfaceCategory[] | undefined> => {
   try {
     if ('apiUrl' in config) {
-      const response: AxiosResponse = await axios.get(
-        `${config.apiUrl}/categories?populate=*`
+      const response: AxiosResponse<{
+        data: InterfaceCategory[];
+      }> = await axios.get(
+        `${config.apiUrl}/categories?populate[featured_image]=true&populate[categories]=true&populate[items][populate][0]=link&populate[items][populate][1]=media&populate[items][populate][2]=featured_image`
       );
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const categories: InterfaceCategory[] = response.data;
+      const categories: InterfaceCategory[] = response.data.data;
       return categories;
     }
   } catch (error) {
@@ -32,11 +34,11 @@ const fetchCategory = async (
 ): Promise<InterfaceCategory | undefined> => {
   try {
     if ('apiUrl' in config) {
-      const response: AxiosResponse = await axios.get(
-        `${config.apiUrl}/categories/${id}?populate=*`
-      );
+      const response: AxiosResponse<{
+        data: InterfaceCategory;
+      }> = await axios.get(`${config.apiUrl}/categories/${id}?populate=*`);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const category: InterfaceCategory = response.data;
+      const category: InterfaceCategory = response.data.data;
 
       return category;
     }

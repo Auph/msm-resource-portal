@@ -156,7 +156,7 @@ export default defineComponent({
       error.value = undefined;
 
       const currentCollection = state.collections.find(
-        stateCollection => String(stateCollection.id) === id
+        stateCollection => String(stateCollection.documentId) === id
       );
 
       if (currentCollection !== undefined) {

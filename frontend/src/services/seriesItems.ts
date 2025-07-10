@@ -15,12 +15,12 @@ const fetchSeriesItems = async (): Promise<
 > => {
   try {
     if ('apiUrl' in config) {
-      const response: AxiosResponse = await axios.get(
-        `${config.apiUrl}/series-items?populate=*`
+      const response: AxiosResponse<{
+        data: InterfaceSeriesItem[];
+      }> = await axios.get(
+        `${config.apiUrl}/series-items?populate[items][populate][0]=link&populate[items][populate][1]=media&populate[items][populate][2]=featured_image`
       );
-      console.log(response.data);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const seriesItems: InterfaceSeriesItem[] = response.data;
+      const seriesItems: InterfaceSeriesItem[] = response.data.data;
       return seriesItems;
     }
   } catch (error) {
@@ -33,11 +33,11 @@ const fetchSeriesItem = async (
 ): Promise<InterfaceSeriesItem | undefined> => {
   try {
     if ('apiUrl' in config) {
-      const response: AxiosResponse = await axios.get(
-        `${config.apiUrl}/series-items/${id}?populate=*`
-      );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const seriesItem: InterfaceSeriesItem = response.data;
+      const response: AxiosResponse<{
+        data: InterfaceSeriesItem;
+      }> = await axios.get(`${config.apiUrl}/series-items/${id}?populate=*`);
+
+      const seriesItem: InterfaceSeriesItem = response.data.data;
 
       return seriesItem;
     }

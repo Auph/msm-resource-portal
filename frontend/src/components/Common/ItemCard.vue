@@ -5,61 +5,65 @@
     :category="category"
     :formattedUpdatedAt="formattedUpdatedAt"
     :mediaExtensions="mediaExtensions"
-    />
+  />
   <ItemCardExpanded
     v-else
     :item="item"
     :category="category"
     :formattedUpdatedAt="formattedUpdatedAt"
     :mediaExtensions="mediaExtensions"
-    />
+  />
 </template>
 
 <script lang="ts">
-import { Platform } from 'quasar'
-import dayjs from 'dayjs'
-import { defineComponent, PropType } from '@vue/composition-api'
+import { Platform } from 'quasar';
+import dayjs from 'dayjs';
+import { defineComponent, PropType } from '@vue/composition-api';
 
-import { InterfaceItem, InterfaceItemMedia } from '../../interfaces'
-import ItemActions from '../Item/Actions.vue'
+import { InterfaceItem, InterfaceItemMedia } from '../../interfaces';
+import ItemActions from '../Item/Actions.vue';
 
-import ItemCardExpanded from './ItemCard.expanded.vue'
-import ItemCardNarrow from './ItemCard.narrow.vue'
+import ItemCardExpanded from './ItemCard.expanded.vue';
+import ItemCardNarrow from './ItemCard.narrow.vue';
 
 export default defineComponent({
   name: 'ItemCard',
   components: {
     ItemActions,
     ItemCardExpanded,
-    ItemCardNarrow,
+    ItemCardNarrow
   },
   props: {
     item: Object as PropType<InterfaceItem>
   },
   setup(props) {
-    const { item } = props
-    const mediaExtensions: Record<string, number> = {}
-    const formattedUpdatedAt = dayjs(item?.updated_at).format('DD MMM YYYY')
+    const { item } = props;
+    const mediaExtensions: Record<string, number> = {};
+    const formattedUpdatedAt = dayjs(item?.updated_at).format('DD MMM YYYY');
 
     if (item && item.media && Array.isArray(item.media)) {
       item.media.forEach((media: InterfaceItemMedia) => {
-        const ext = String(media.ext).replace('.', '')
-        mediaExtensions[ext] = isNaN(mediaExtensions[ext]) ? 1 : mediaExtensions[ext] + 1
-      })
+        const ext = String(media.ext).replace('.', '');
+        mediaExtensions[ext] = isNaN(mediaExtensions[ext])
+          ? 1
+          : mediaExtensions[ext] + 1;
+      });
     }
 
     if (item && item.link && Array.isArray(item.link) && item.link.length > 0) {
-      mediaExtensions['links'] = isNaN(mediaExtensions['links']) ? 1 : mediaExtensions['links'] + 1
+      mediaExtensions['links'] = isNaN(mediaExtensions['links'])
+        ? 1
+        : mediaExtensions['links'] + 1;
     }
 
     return {
-      category: item?.categories[0].title?.toUpperCase(),
+      category: item?.categories[0]?.title?.toUpperCase(),
       formattedUpdatedAt,
       mediaExtensions,
-      isMobile: Platform.is.mobile as boolean,
-    }
+      isMobile: Platform.is.mobile as boolean
+    };
   }
-})
+});
 </script>
 
 <style lang="scss">
@@ -81,7 +85,7 @@ export default defineComponent({
 <style scoped lang="scss">
 .item-card {
   .content {
-    width: calc(100% - 100px)
+    width: calc(100% - 100px);
   }
   .details {
     height: 57px;

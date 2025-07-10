@@ -122,12 +122,17 @@ export interface InterfaceStateItems {
 
 export interface InterfaceItem {
   id: number;
+  documentId: string;
   title: string | null;
   description_short: string | null;
   description_long: string | null;
   media: InterfaceItemMedia[];
   featured_image: InterfaceImage;
-  link: string[];
+  link: {
+    id: number;
+    title: string;
+    url: string;
+  }[];
 
   categories: InterfaceCategory[];
   tags: InterfaceTag[];

@@ -27,8 +27,8 @@ const fetchCollectionCategories = async (
       `${config.apiUrl}/collection-categories?populate[collections][populate][0]=featured_image`,
       options
     );
-
-    return response.data.data;
+    const collectionCat: InterfaceCollectionCategory[] = response.data.data;
+    return collectionCat;
   } catch (error) {
     console.error(error as AxiosError);
   }
@@ -57,7 +57,6 @@ const useCollectionCategories = () => {
       console.error('CollectionCategories is undefined');
     } else {
       state.collectionCategories = collectionCategories;
-      console.log(state);
     }
 
     return collectionCategories;

@@ -50,11 +50,12 @@ const fetchCollections = async (
   }
 
   try {
-    const response: AxiosResponse = await axios.get(
-      `${config.apiUrl}/collections?populate=*`,
-      options
-    );
-    return response.data as InterfaceCollection[];
+    const response: AxiosResponse<{
+      data: InterfaceCollection[];
+    }> = await axios.get(`${config.apiUrl}/collections?populate=*`, options);
+
+    const collections: InterfaceCollection[] = response.data.data;
+    return collections;
   } catch (error) {
     console.error(error as AxiosError);
   }
@@ -80,12 +81,14 @@ const fetchCollection = async (
       }
     : undefined;
   try {
-    const response: AxiosResponse = await axios.get(
-      `${config.apiUrl}/collections/${id}?populate=*`,
+    const response: AxiosResponse<{
+      data: InterfaceCollection;
+    }> = await axios.get(
+      `${config.apiUrl}/collections/${id}?populate[items][populate][0]=link&populate[items][populate][1]=media&populate[items][populate][2]=featured_image&populate[items][populate][3]=categories&populate[items][populate][4]=tags&populate[items][populate][5]=series_items&populate[featured_image]=true`,
       options
     );
-
-    return response.data as InterfaceCollection;
+    const collections: InterfaceCollection = response.data.data;
+    return collections;
   } catch (error) {
     console.error(error as AxiosError);
   }
@@ -215,7 +218,6 @@ const useCollections = () => {
       console.error('Collections is undefined');
     } else {
       state.collections = collections;
-      console.log(state);
     }
 
     return collections;
@@ -236,6 +238,7 @@ const useCollections = () => {
       const index = state.collections.findIndex(
         stateCollection => stateCollection.id === collection.id
       );
+
       if (index === -1) {
         state.collections.push(collection);
       } else {
