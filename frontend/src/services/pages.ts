@@ -12,9 +12,10 @@ const fetchPage = async (slug: string): Promise<InterfacePage | undefined> => {
         `${config.apiUrl}/pages?slug=${slug}&populate=*`
       );
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const pages: InterfacePage[] = response.data;
 
-      return pages.length > 0 ? pages[0] : undefined;
+      const pages: InterfacePage[] = response.data.data;
+      const index = slug == 'about' ? 0 : slug == 'privacy' ? 1 : 2;
+      return pages.length > 2 ? pages[index] : undefined;
     }
   } catch (error) {
     console.error(error);
