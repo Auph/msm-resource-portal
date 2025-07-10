@@ -21,11 +21,14 @@ const fetchCollectionCategories = async (
   }
 
   try {
-    const response: AxiosResponse = await axios.get(
+    const response: AxiosResponse<{
+      data: InterfaceCollectionCategory[];
+    }> = await axios.get(
       `${config.apiUrl}/collection-categories?populate[collections][populate][0]=featured_image`,
       options
     );
-    return response.data.data as InterfaceCollectionCategory[];
+
+    return response.data.data;
   } catch (error) {
     console.error(error as AxiosError);
   }

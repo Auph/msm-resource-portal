@@ -8,13 +8,12 @@ import { InterfacePage } from 'src/interfaces';
 const fetchPage = async (slug: string): Promise<InterfacePage | undefined> => {
   try {
     if ('apiUrl' in config) {
-      const response: AxiosResponse = await axios.get(
-        `${config.apiUrl}/pages?slug=${slug}&populate=*`
-      );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const response: AxiosResponse<{
+        data: InterfacePage[];
+      }> = await axios.get(`${config.apiUrl}/pages?slug=${slug}&populate=*`);
 
       const pages: InterfacePage[] = response.data.data;
-      const index = slug == 'about' ? 0 : slug == 'privacy' ? 1 : 2;
+      const index = slug === 'about' ? 0 : slug === 'privacy' ? 1 : 2;
       return pages.length > 2 ? pages[index] : undefined;
     }
   } catch (error) {
