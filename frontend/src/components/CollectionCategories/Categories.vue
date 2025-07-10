@@ -25,7 +25,7 @@
           <router-link
             v-for="collection in category.collections"
             :key="collection.id"
-            :to="`/collections/${collection.document_id}`"
+            :to="`/collections/${collection.documentId}`"
             class="collection-category col col-6 col-sm-4 col-md-3"
           >
             <q-img

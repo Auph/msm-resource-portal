@@ -166,7 +166,7 @@ export interface InterfaceItemMediaObject {
  */
 export interface InterfaceCollection {
   id: number;
-  document_id: string;
+  documentId: string;
   user: number;
   title: string;
   description: string;

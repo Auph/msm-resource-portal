@@ -1,66 +1,60 @@
 <template>
-  <q-page
-    v-if="loading === true"
-    class="flex items-center"
-    >
-    <div
-      class="flex full-width justify-center align-center"
-      >
+  <q-page v-if="loading === true" class="flex items-center">
+    <div class="flex full-width justify-center align-center">
       <loading />
     </div>
   </q-page>
   <q-page
     v-else-if="error !== undefined"
     class="flex full-width justify-center align-center items-center"
-    >
+  >
     <h4 class="text-red-8">{{ error }}</h4>
   </q-page>
-  <q-page
-    class="container"
-    v-else-if="collection !== undefined"
-    >
+  <q-page class="container" v-else-if="collection !== undefined">
     <q-banner
       v-if="!authenticated"
       :inline-actions="!isMobile"
       :class="`bg-white ${isMobile ? 'q-px-md' : 'q-px-lg'} shadow-5 q-py-md`"
-      >
-      <b>Welcome!</b> Register an account to view more resources and create your own collections.
+    >
+      <b>Welcome!</b> Register an account to view more resources and create your
+      own collections.
       <div :class="`${isMobile ? 'q-pt-sm' : ''}`" />
       <template v-slot:action>
         <q-btn
           rounded
           unelevated
-          no-caps 
+          no-caps
           :class="`q-px-sm q-mr-md`"
           color="accent"
           to="/register"
           label="Register"
-          />
+        />
         <q-btn
           rounded
           outline
-          no-caps 
+          no-caps
           class="q-px-sm"
           :to="`/login?redirectUrl=${currentEncodedUrlPath}`"
           label="Login"
-          />
+        />
       </template>
     </q-banner>
-    <div
-      :class="'row ' + (isMobile ? 'q-py-md' : 'q-py-xl')"
-      >
+    <div :class="'row ' + (isMobile ? 'q-py-md' : 'q-py-xl')">
       <div class="col- col-sm-3 col-md-2">
         <q-img
-            :src="(collection && collection.featured_image && typeof collection.featured_image.url === 'string') ? collection.featured_image.url : '/assets/musicfile.jpg'"
+          :src="
+            collection &&
+            collection.featured_image &&
+            typeof collection.featured_image.url === 'string'
+              ? collection.featured_image.url
+              : '/assets/musicfile.jpg'
+          "
           :style="'max-width: ' + (isMobile ? '260' : '300') + 'px'"
-          />
+        />
       </div>
       <div class="col-8 col-sm-9 col-md-10 q-pl-lg">
         <h1 class="text-h4 text-semibold">{{ collection.title }}</h1>
-        <p
-          v-if="collection.description"
-          class="text-body1 text-grey-8"
-          >
+        <p v-if="collection.description" class="text-body1 text-grey-8">
           {{ collection.description }}
         </p>
 
@@ -74,7 +68,7 @@
           outline
           @click="() => shareCollection(collection)"
           unelevated
-          />
+        />
       </div>
     </div>
     <div class="row q-py-md">
@@ -89,19 +83,13 @@
           :pagination.sync="tableOptions.pagination"
         >
           <template v-slot:top>
-            <div
-              v-if="!isMobile"
-              class="col-xs-12"
-              >
-              <ItemHeaderExpanded
-                />
+            <div v-if="!isMobile" class="col-xs-12">
+              <ItemHeaderExpanded />
             </div>
           </template>
           <template v-slot:item="props">
             <div class="col-xs-12">
-              <ItemCard
-                :item="props.row"
-                />
+              <ItemCard :item="props.row" />
             </div>
           </template>
         </q-table>
@@ -111,91 +99,92 @@
 </template>
 
 <script lang="ts">
-import { ref, Ref, watch, onBeforeMount } from '@vue/composition-api'
-import { InterfaceCollection } from '../../interfaces'
-import { defineComponent } from '@vue/composition-api'
-import { Platform } from 'quasar'
+import { ref, Ref, watch, onBeforeMount } from '@vue/composition-api';
+import { InterfaceCollection } from '../../interfaces';
+import { defineComponent } from '@vue/composition-api';
+import { Platform } from 'quasar';
 
-import Loading from '../../components/Common/Loading.vue'
-import ItemCard from '../../components/Common/ItemCard.vue'
-import ItemHeaderExpanded from '../../components/Common/ItemHeader.expanded.vue'
+import Loading from '../../components/Common/Loading.vue';
+import ItemCard from '../../components/Common/ItemCard.vue';
+import ItemHeaderExpanded from '../../components/Common/ItemHeader.expanded.vue';
 
-import { useCollections } from '../../services/collections'
-import { isAuthenticated } from '../../services/authentication'
+import { useCollections } from '../../services/collections';
+import { isAuthenticated } from '../../services/authentication';
 
-import config from '../../config/config'
-import { share } from '../../utilities/share'
+import config from '../../config/config';
+import { share } from '../../utilities/share';
 
 export default defineComponent({
   name: 'PageCollectionsSingle',
   components: {
     Loading,
     ItemCard,
-    ItemHeaderExpanded,
+    ItemHeaderExpanded
   },
-  setup (_props, ctx) {
-    const id = ctx.root.$route.params.collectionId
-    const loading = ref(true)
-    const error: Ref<string|undefined> = ref()
-    const collection: Ref<InterfaceCollection|undefined> = ref()
-    const authenticated: Ref<boolean> = ref(true)
-    const currentEncodedUrlPath = encodeURI(window.location.pathname)
+  setup(_props, ctx) {
+    const id = ctx.root.$route.params.collectionId;
+    const loading = ref(true);
+    const error: Ref<string | undefined> = ref();
+    const collection: Ref<InterfaceCollection | undefined> = ref();
+    const authenticated: Ref<boolean> = ref(true);
+    const currentEncodedUrlPath = encodeURI(window.location.pathname);
 
-    const { state, getCollection } = useCollections()
+    const { state, getCollection } = useCollections();
 
     const tableOptions = {
       filter: '',
       pagination: {
         page: 1,
         rowsPerPage: 50
-      },
-    }
+      }
+    };
 
     /**
      * Shares a collection
      */
     const shareCollection = async (collection: InterfaceCollection) => {
       await share(
-      `${collection.title || ''}`,
-      `${collection.title || ''}: ${collection.description || ''}`,
-      `${config.app.host || 'portal.msmusic.edu.sg'}/collections/${collection.id}`
-      )
-    }
+        `${collection.title || ''}`,
+        `${collection.title || ''}: ${collection.description || ''}`,
+        `${config.app.host || 'portal.msmusic.edu.sg'}/collections/${
+          collection.documentId
+        }`
+      );
+    };
 
     const updateCollection = () => {
-      error.value = undefined
+      error.value = undefined;
 
-      const currentCollection = state.collections.find(stateCollection => String(stateCollection.id) === id)
-      
+      const currentCollection = state.collections.find(
+        stateCollection => String(stateCollection.id) === id
+      );
+
       if (currentCollection !== undefined) {
         if (currentCollection.is_public === true) {
-          collection.value = currentCollection
+          collection.value = currentCollection;
         } else {
-          error.value = 'This collection is private'
+          error.value = 'This collection is private';
         }
       } else {
-        console.error('No collection found')
-        error.value = 'No collection found'
+        console.error('No collection found');
+        error.value = 'No collection found';
       }
-    }
+    };
 
     const fetchCollection = async () => {
-      loading.value = true
-      await getCollection(id)
-      updateCollection()
-      loading.value = false
-    }
+      loading.value = true;
+      await getCollection(id);
+      updateCollection();
+      loading.value = false;
+    };
 
     onBeforeMount(async () => {
-      await fetchCollection()
-      console.log(await isAuthenticated())
-      authenticated.value = await isAuthenticated()
-    })
+      await fetchCollection();
+      console.log(await isAuthenticated());
+      authenticated.value = await isAuthenticated();
+    });
 
-    watch(
-      () => state.collections,
-      updateCollection
-    )
+    watch(() => state.collections, updateCollection);
 
     return {
       authenticated,
@@ -205,8 +194,8 @@ export default defineComponent({
       isMobile: Platform.is.mobile as boolean,
       loading,
       tableOptions,
-      shareCollection,
-    }
+      shareCollection
+    };
   }
 });
 </script>
