@@ -217,6 +217,7 @@ export interface InterfaceInterest {
 }
 export interface InterfaceUser {
   id: number | null;
+  documentId: string | null;
   username: string | null;
   jwt?: string | null;
   firstName: string | null;
@@ -231,6 +232,7 @@ export interface InterfaceUser {
   created_at: string | null;
   updated_at: string | null;
   createdAtFormatted: string | null;
+  createdAt: string | null;
 }
 
 export interface InterfacePage {

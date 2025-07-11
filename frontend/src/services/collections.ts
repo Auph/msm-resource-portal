@@ -52,7 +52,7 @@ const fetchCollections = async (
   try {
     const response: AxiosResponse<{
       data: InterfaceCollection[];
-    }> = await axios.get(`${config.apiUrl}/collections?populate=*`, options);
+    }> = await axios.get(`${config.apiUrl}/collections`, options);
 
     const collections: InterfaceCollection[] = response.data.data;
     return collections;
@@ -83,10 +83,7 @@ const fetchCollection = async (
   try {
     const response: AxiosResponse<{
       data: InterfaceCollection;
-    }> = await axios.get(
-      `${config.apiUrl}/collections/${id}?populate[items][populate][0]=link&populate[items][populate][1]=media&populate[items][populate][2]=featured_image&populate[items][populate][3]=categories&populate[items][populate][4]=tags&populate[items][populate][5]=series_items&populate[featured_image]=true`,
-      options
-    );
+    }> = await axios.get(`${config.apiUrl}/collections/${id}`, options);
     const collections: InterfaceCollection = response.data.data;
     return collections;
   } catch (error) {
@@ -156,7 +153,7 @@ const destroyCollection = async (
  */
 const updateCollectionItems = async (
   items: number[],
-  collectionId: number
+  collectionId: string
 ): Promise<InterfaceCollection | undefined> => {
   const token = await getAuthenticationToken();
   try {
@@ -266,7 +263,7 @@ const useCollections = () => {
     } else {
       //  Search state for collection id
       const index = state.collections.findIndex(
-        stateCollection => stateCollection.id === collection.id
+        stateCollection => stateCollection.documentId === collection.documentId
       );
       if (index === -1) {
         const newCollections = [...state.collections];
@@ -295,7 +292,7 @@ const useCollections = () => {
     if (deletedCollection) {
       const index: number = state.collections.findIndex(
         (collection: InterfaceCollection) => {
-          return collection.id === deletedCollection.id;
+          return collection.documentId === deletedCollection.documentId;
         }
       );
       state.collections.splice(index, 1);
@@ -309,7 +306,8 @@ const useCollections = () => {
    */
   const addItem = async (
     itemId: number,
-    collectionId: number
+    collectionId: number,
+    documentId: string
   ): Promise<InterfaceCollection | undefined> => {
     const collectionIndex: number = state.collections.findIndex(
       (collection: InterfaceCollection): boolean =>
@@ -327,7 +325,7 @@ const useCollections = () => {
 
       const collection:
         | InterfaceCollection
-        | undefined = await updateCollectionItems(_.uniq(items), collectionId);
+        | undefined = await updateCollectionItems(_.uniq(items), documentId);
 
       if (collection === undefined) {
         alert('Item could not be added to collection');
@@ -342,7 +340,8 @@ const useCollections = () => {
    */
   const removeItem = async (
     itemId: number,
-    collectionId: number
+    collectionId: number,
+    documentId: string
   ): Promise<InterfaceCollection | undefined> => {
     const collectionIndex: number = state.collections.findIndex(
       (collection: InterfaceCollection): boolean =>
@@ -359,7 +358,7 @@ const useCollections = () => {
 
       const collection:
         | InterfaceCollection
-        | undefined = await updateCollectionItems(_.uniq(items), collectionId);
+        | undefined = await updateCollectionItems(_.uniq(items), documentId);
 
       if (collection === undefined) {
         alert('Item could not be removed from collection');

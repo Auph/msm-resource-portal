@@ -25,6 +25,7 @@
             () =>
               toggleCollection(
                 collectionsState.collections[index].id,
+                collectionsState.collections[index].documentId,
                 !itemCollections.includes(collection.id)
               )
           "
@@ -108,34 +109,44 @@ export default defineComponent({
         | undefined = await createCollection(title);
 
       if (collection !== undefined) {
-        await addToCollection(collection.id);
+        await addToCollection(collection.id, collection.documentId);
       }
     };
 
     /**
      * Toggle Collection
      */
-    const toggleCollection = async (collectionId: number, add: boolean) => {
+    const toggleCollection = async (
+      collectionId: number,
+      documentId: string,
+      add: boolean
+    ) => {
       if (add) {
-        await addToCollection(collectionId);
+        await addToCollection(collectionId, documentId);
       } else {
-        await removeFromCollection(collectionId);
+        await removeFromCollection(collectionId, documentId);
       }
     };
 
     /**
      * Add to collection
      */
-    const addToCollection = async (collectionId: number) => {
-      await addItem(props.item.id, collectionId);
+    const addToCollection = async (
+      collectionId: number,
+      documentId: string
+    ) => {
+      await addItem(props.item.id, collectionId, documentId);
       getItemCollections();
     };
 
     /**
      * Remove from collection
      */
-    const removeFromCollection = async (collectionId: number) => {
-      await removeItem(Number(props.item.id), collectionId);
+    const removeFromCollection = async (
+      collectionId: number,
+      documentId: string
+    ) => {
+      await removeItem(Number(props.item.id), collectionId, documentId);
       getItemCollections();
     };
 

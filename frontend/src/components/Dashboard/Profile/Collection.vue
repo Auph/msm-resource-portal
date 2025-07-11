@@ -143,11 +143,11 @@ export default defineComponent({
     const editVisibility = async () => {
       if (
         props?.collection &&
-        props.collection.id &&
+        props.collection.documentId &&
         props.collection.is_public !== undefined
       ) {
         loading.value = true;
-        await updateCollection(props.collection.id, {
+        await updateCollection(props.collection.documentId, {
           is_public: !(props.collection.is_public ? true : false)
         });
         loading.value = false;
@@ -157,11 +157,11 @@ export default defineComponent({
     const editTitle = async () => {
       if (
         props?.collection &&
-        props.collection.id &&
+        props.collection.documentId &&
         props.collection.title !== undefined
       ) {
         loading.value = true;
-        await updateCollection(props.collection.id, {
+        await updateCollection(props.collection.documentId, {
           title: title.value
         });
         loading.value = false;
@@ -183,7 +183,7 @@ export default defineComponent({
             )}`
           )
         ) {
-          await deleteCollection(props.collection.id);
+          await deleteCollection(props.collection.documentId);
         }
       }
     };
@@ -193,7 +193,7 @@ export default defineComponent({
         `${collection.title || ''}`,
         `${collection.title || ''}: ${collection.description || ''}`,
         `${config.app.host || 'portal.msmusic.edu.sg'}/collections/${
-          collection.id
+          collection.documentId
         }`
       );
     };
