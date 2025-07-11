@@ -12,6 +12,13 @@ module.exports = ({ env }) => ({
             },
         },
     },
+    "users-permissions": {
+        config: {
+            register: {
+                allowedFields: ["firstName", "lastName", "interests"], // Add your custom fields here
+            },
+        },
+    },
     upload: {
         config: {
             provider: "aws-s3", // or "@strapi/provider-upload-aws-s3"
