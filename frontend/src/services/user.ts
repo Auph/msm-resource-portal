@@ -3,7 +3,7 @@ import VueCompositionAPI, { Ref, ref } from '@vue/composition-api';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { Plugins, StoragePlugin } from '@capacitor/core';
-
+import { Notify } from 'quasar';
 import { InterfaceLoginResponse, InterfaceUser } from 'src/interfaces';
 import {
   storeAuthenticationToken,
@@ -92,6 +92,7 @@ const useUser = () => {
   /**
    * Update Profile
    */
+
   const updateProfile = async (
     profile: Record<string, string>
   ): Promise<void> => {
@@ -110,6 +111,7 @@ const useUser = () => {
         }
       );
       populateUser(response.data);
+      Notify.create('Saved Successfully');
     }
 
     return;

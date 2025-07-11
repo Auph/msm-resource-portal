@@ -54,7 +54,7 @@ module.exports = configure(function (ctx) {
     build: {
       vueRouterMode: 'history', // available values: 'hash', 'history'
       env: {
-        //apiUrl: 'http://localhost:1337' || 'https://content.msmusic.edu.sg',
+        //apiUrl: 'http://localhost:1337/api' || 'https://content.msmusic.edu.sg',
         apiUrl: process.env.apiUrl || 'https://content.msmusic.edu.sg',
         hotjarId: process.env.hotjarId || null
       },
@@ -112,7 +112,7 @@ module.exports = configure(function (ctx) {
       importStrategy: 'auto',
 
       // Quasar plugins
-      plugins: []
+      plugins: ['Notify']
     },
 
     // animations: 'all', // --- includes all animations
