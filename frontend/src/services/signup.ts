@@ -1,5 +1,6 @@
 import { reactive, ref, Ref } from '@vue/composition-api';
 import axios, { AxiosError } from 'axios';
+import { Notify } from 'quasar';
 
 import {
   InterfaceSignupErrors,
@@ -114,6 +115,7 @@ const useSignup = () => {
             for (const message of single.messages) {
               switch (message.id) {
                 default:
+                  Notify.create(message.message);
                   errors.others = message.message;
                   break;
               }
@@ -157,6 +159,7 @@ const useSignup = () => {
         console.log('An error occurred:', error.response);
       })
       .finally(() => {
+        Notify.create('Something went wrong');
         loading.value = false;
       });
   };

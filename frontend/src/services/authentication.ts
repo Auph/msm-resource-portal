@@ -3,6 +3,17 @@ import { reactive, Ref, ref } from '@vue/composition-api';
 import { AxiosResponse, AxiosError } from 'axios';
 import { Plugins, StoragePlugin } from '@capacitor/core';
 import axios from 'axios';
+import { Notify } from 'quasar';
+
+interface ErrorResponse {
+  response?: {
+    data?: {
+      data?: {
+        messages: { message: string }[];
+      }[];
+    };
+  };
+}
 
 import {
   InterfaceAuthenticationErrors,
@@ -129,6 +140,7 @@ const useAuthentication = () => {
         if (loginErrors !== null) {
           for (const single of loginErrors.data) {
             for (const message of single.messages) {
+              Notify.create(message.message);
               switch (message.id) {
                 case 'Auth.form.error.email.provide':
                   errors.email = message.message;
@@ -178,8 +190,10 @@ const useAuthentication = () => {
       .catch((error: AxiosError) => {
         console.error(error.response?.data?.data[0].messages[0]);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        Notify.create(error.response?.data?.data[0].messages[0].message);
+        const typedError = error as ErrorResponse;
         errors.passwordConfirmation =
-          error.response?.data?.data[0].messages[0].message;
+          typedError.response?.data?.data?.[0]?.messages?.[0]?.message || '';
         loading.value = false;
       });
   };
@@ -200,6 +214,7 @@ const useAuthentication = () => {
         resetEmailSent.value = true;
       })
       .catch((error: AxiosError) => {
+        Notify.create(error.message);
         console.error(error);
       })
       .finally(() => {
