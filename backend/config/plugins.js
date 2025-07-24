@@ -23,6 +23,7 @@ module.exports = ({ env }) => ({
         config: {
             provider: "aws-s3", // or "@strapi/provider-upload-aws-s3"
             providerOptions: {
+                baseUrl: env("AWS_ENDPOINT"),
                 s3Options: {
                     credentials: {
                         accessKeyId: env("AWS_ACCESS_KEY_ID"),
