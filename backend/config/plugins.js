@@ -28,12 +28,12 @@ module.exports = ({ env }) => ({
                         accessKeyId: env("AWS_ACCESS_KEY_ID"),
                         secretAccessKey: env("AWS_ACCESS_SECRET"),
                     },
+                    region: env('AWS_REGION'), // e.g "fr-par"
+                    endpoint: "https://fra1.digitaloceanspaces.com",
                     params: {
                         Bucket: env("AWS_BUCKET"),
                     },
-                },
-                // Optionally include baseUrl if using custom URL/CDN
-                baseUrl: env("AWS_ENDPOINT", undefined),
+                }
             },
             actionOptions: {
                 upload: {},
