@@ -30,7 +30,7 @@ module.exports = ({ env }) => ({
                         secretAccessKey: env("AWS_ACCESS_SECRET"),
                     },
                     region: env('AWS_REGION'), // e.g "fr-par"
-                    endpoint: "https://msmresourceportal.fra1.digitaloceanspaces.com",
+                    endpoint: "https://fra1.digitaloceanspaces.com",
                     params: {
                         Bucket: env("AWS_BUCKET"),
                     },
