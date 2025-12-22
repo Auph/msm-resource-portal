@@ -170,13 +170,11 @@ const useSignup = () => {
    * Shows error notification and sets error field
    */
   const showError = (field: keyof InterfaceSignupErrors, message: string): void => {
-    // Always show notification first - ensure it's called synchronously
+    // Always show notification first - use simple format like authentication.ts
     Notify.create({
       type: 'negative',
       message: message,
-      position: 'top',
-      timeout: 5000,
-      actions: [{ icon: 'close', color: 'white' }]
+      position: 'top'
     });
     
     // Then set the field error
