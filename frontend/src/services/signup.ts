@@ -261,6 +261,127 @@ const useSignup = () => {
     );
   };
 
+  // Store timeout reference for debouncing
+  let emailCheckTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Checks if email is available (not already registered)
+   * This is called in real-time as user types (with debouncing)
+   */
+  const checkEmailAvailability = async (email: string): Promise<void> => {
+    // Clear previous timeout
+    if (emailCheckTimeout) {
+      clearTimeout(emailCheckTimeout);
+      emailCheckTimeout = null;
+    }
+
+    // Reset email error if email is empty or invalid format
+    if (!email || !validateEmail(email)) {
+      // Only clear error if it was a duplicate email error
+      if (errors.email === DUPLICATE_EMAIL_MESSAGE) {
+        errors.email = null;
+      }
+      return;
+    }
+
+    // Debounce the API call - wait 500ms after user stops typing
+    emailCheckTimeout = setTimeout(async () => {
+      // Reset email error first (will be set again if duplicate)
+      if (errors.email === DUPLICATE_EMAIL_MESSAGE) {
+        errors.email = null;
+      }
+
+      try {
+        // Try to register to check if email exists
+        // We'll catch 400 errors which indicate duplicate email
+        await axios.post(String(process.env.apiUrl) + '/auth/local/register', {
+          firstName: 'Validation',
+          lastName: 'Check',
+          username: email.toLowerCase(),
+          email: email.toLowerCase(),
+          password: 'TempPass123!' // Temporary password just for validation
+        });
+        
+        // If registration succeeds, email is available (but we don't want to actually register)
+        // This shouldn't happen in normal flow, but if it does, email is available
+        // Clear any previous duplicate email error
+        if (errors.email === DUPLICATE_EMAIL_MESSAGE) {
+          errors.email = null;
+        }
+      } catch (error) {
+        const axiosError = error as AxiosError;
+        const statusCode = axiosError.response?.status;
+        
+        // 400 means duplicate email or validation error
+        if (statusCode === 400) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const errorData = axiosError.response?.data;
+          
+          // Check if it's a duplicate email error
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const hasData = errorData && typeof errorData === 'object' && Object.keys(errorData as Record<string, unknown>).length > 0;
+          
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          if (hasData && errorData && typeof errorData === 'object' && 'data' in errorData && Array.isArray((errorData as { data: unknown }).data) && (errorData as { data: unknown[] }).data.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const signupErrors: InterfaceLoginError = errorData as InterfaceLoginError;
+            let isDuplicateEmail = false;
+            
+            for (const single of signupErrors.data) {
+              for (const message of single.messages) {
+                if (
+                  message.id === ERROR_IDS.EMAIL_TAKEN ||
+                  message.id === ERROR_IDS.USERNAME_TAKEN ||
+                  isDuplicateEmailError(message.message)
+                ) {
+                  isDuplicateEmail = true;
+                  break;
+                }
+              }
+              if (isDuplicateEmail) break;
+            }
+            
+            if (isDuplicateEmail) {
+              errors.email = DUPLICATE_EMAIL_MESSAGE;
+              Notify.create({
+                type: 'negative',
+                message: DUPLICATE_EMAIL_MESSAGE,
+                position: 'top'
+              });
+            }
+          } else {
+            // Empty error data with 400 - likely duplicate email
+            errors.email = DUPLICATE_EMAIL_MESSAGE;
+            Notify.create({
+              type: 'negative',
+              message: DUPLICATE_EMAIL_MESSAGE,
+              position: 'top'
+            });
+          }
+        }
+      }
+    }, 500); // 500ms debounce delay
+  };
+
+  /**
+   * Validates form fields before proceeding to next step
+   * This only validates form fields, not email availability
+   * Email availability should be checked separately (on blur or input)
+   */
+  const validateFormBeforeProceed = (): boolean => {
+    // Validate all form fields
+    if (!signupValidation()) {
+      return false;
+    }
+
+    // Check if email already has an error (from previous check or registration attempt)
+    if (errors.email) {
+      return false;
+    }
+
+    return true;
+  };
+
   /**
    * Shows error notification and sets error field
    */

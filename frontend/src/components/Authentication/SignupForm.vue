@@ -82,6 +82,8 @@
         label="Email *"
         bottom-slots
         :error="errors.email !== null"
+        debounce="500"
+        @input="checkEmailAvailability(state.email)"
         @blur="checkEmailAvailability(state.email)"
         required
       >
