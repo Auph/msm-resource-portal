@@ -211,7 +211,13 @@ const useSignup = () => {
     loading.value = true;
 
     axios
-      .post(String(process.env.apiUrl) + '/auth/send-email-confirmation', {
+      // Use /api prefix as shown in constants/endpoints.ts
+      const apiBaseUrl = String(process.env.apiUrl);
+      const emailConfirmUrl = apiBaseUrl.endsWith('/api') 
+        ? apiBaseUrl + '/auth/send-email-confirmation'
+        : apiBaseUrl + '/api/auth/send-email-confirmation';
+      
+      axios.post(emailConfirmUrl, {
         email: email.toLowerCase()
       })
       .then(() => {
@@ -296,7 +302,13 @@ const useSignup = () => {
         try {
           // Try to register to check if email exists
           // We'll catch 400 errors which indicate duplicate email
-          await axios.post(String(process.env.apiUrl) + '/auth/local/register', {
+          // Use /api prefix as shown in constants/endpoints.ts
+          const apiBaseUrl = String(process.env.apiUrl);
+          const checkUrl = apiBaseUrl.endsWith('/api') 
+            ? apiBaseUrl + '/auth/local/register'
+            : apiBaseUrl + '/api/auth/local/register';
+          
+          await axios.post(checkUrl, {
             firstName: 'Validation',
             lastName: 'Check',
             username: email.toLowerCase(),
@@ -493,8 +505,13 @@ const useSignup = () => {
     loading.value = true;
 
     try {
-      // Use same pattern as authentication service (apiUrl may already include /api)
-      await axios.post(String(process.env.apiUrl) + '/auth/local/register', {
+      // Use /api prefix as shown in constants/endpoints.ts
+      const apiBaseUrl = String(process.env.apiUrl);
+      const registerUrl = apiBaseUrl.endsWith('/api') 
+        ? apiBaseUrl + '/auth/local/register'
+        : apiBaseUrl + '/api/auth/local/register';
+      
+      await axios.post(registerUrl, {
         firstName: state.firstName,
         lastName: state.lastName,
         interests: state.interests as number[],
