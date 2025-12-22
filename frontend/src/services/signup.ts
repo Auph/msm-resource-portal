@@ -527,22 +527,22 @@ const useSignup = () => {
       const { login } = useUser();
       await login(response.data);
       
-      // Set loading to false
+      // Set loading to false and completed to true
       loading.value = false;
+      completed.value = true;
       
       // Reset form state
       reset();
       
       // Redirect to dashboard (which redirects to /explore)
-      // Use setTimeout to ensure state updates are processed before redirect
-      setTimeout(() => {
-        void Router.push('/dashboard').catch(() => {
-          // If redirect fails, try direct navigation as fallback
-          window.location.href = '/dashboard';
-        });
-      }, 100);
-      
-      completed.value = true;
+      // Use window.location as it's more reliable than Router.push for post-registration
+      try {
+        await Router.push('/dashboard');
+      } catch (redirectError) {
+        // If Router.push fails, use window.location as fallback
+        console.error('Router.push failed, using window.location:', redirectError);
+        window.location.href = '/dashboard';
+      }
     } catch (error) {
       const axiosError = error as AxiosError;
       const statusCode = axiosError.response?.status;
