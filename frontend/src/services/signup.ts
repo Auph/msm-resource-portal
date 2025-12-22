@@ -213,7 +213,8 @@ const useSignup = () => {
           }
         } else {
           // Fallback for unexpected error format
-          const errorMessage = error.response?.data?.message || 'An error occurred during registration. Please try again.';
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const errorMessage: string = (error.response?.data as { message?: string })?.message || 'An error occurred during registration. Please try again.';
           errors.others = errorMessage;
           Notify.create({
             type: 'negative',
