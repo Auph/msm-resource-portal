@@ -296,13 +296,11 @@ const useSignup = () => {
       // For 400 errors, always show duplicate email message immediately
       // This ensures the user always sees an error message
       if (statusCode === 400) {
-        // Show error notification immediately - this MUST be called
+        // Show error notification immediately - use simple format like authentication.ts
         Notify.create({
           type: 'negative',
           message: DUPLICATE_EMAIL_MESSAGE,
-          position: 'top',
-          timeout: 5000,
-          actions: [{ icon: 'close', color: 'white' }]
+          position: 'top'
         });
         
         // Also set the field error
