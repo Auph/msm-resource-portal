@@ -1,12 +1,15 @@
 import { reactive, ref, Ref } from '@vue/composition-api';
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import { Notify } from 'quasar';
 
 import {
   InterfaceSignupErrors,
   InterfaceLoginError,
+  InterfaceLoginResponse,
   InterfaceStateSignup
 } from 'src/interfaces';
+import { Router } from 'src/router';
+import { useUser } from './user';
 
 // Constants
 const DUPLICATE_EMAIL_MESSAGE = 'This email is already registered. Please use a different email or try logging in.';
@@ -511,7 +514,7 @@ const useSignup = () => {
         ? apiBaseUrl + '/auth/local/register'
         : apiBaseUrl + '/api/auth/local/register';
       
-      await axios.post(registerUrl, {
+      const response: AxiosResponse<InterfaceLoginResponse> = await axios.post(registerUrl, {
         firstName: state.firstName,
         lastName: state.lastName,
         interests: state.interests as number[],
@@ -519,6 +522,13 @@ const useSignup = () => {
         email: state.email?.toLowerCase(),
         password: state.password
       });
+      
+      // Save user profile (JWT and user data) like login does
+      const { login } = useUser();
+      await login(response.data);
+      
+      // Redirect to dashboard
+      void Router.push('/dashboard');
       
       completed.value = true;
       reset();
