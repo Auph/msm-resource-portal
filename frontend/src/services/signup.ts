@@ -190,34 +190,34 @@ const useSignup = () => {
   };
 
   /**
+   * Type guard to check if value is a non-null object
+   */
+  const isNonNullObject = (value: unknown): value is Record<string, unknown> => {
+    return value !== null && value !== undefined && typeof value === 'object';
+  };
+
+  /**
    * Extracts error message from various error response formats
    */
   const extractErrorMessage = (errorData: unknown): string | null => {
-    if (!errorData || typeof errorData !== 'object' || errorData === null) {
+    // Type guard: ensure errorData is a non-null object
+    if (!isNonNullObject(errorData)) {
       return null;
     }
 
     // Try Strapi error format: { message: string }
-    if (errorData !== null && 'message' in errorData) {
-      const messageObj = errorData as { message: unknown };
-      const message = messageObj.message;
+    if ('message' in errorData) {
+      const message = errorData.message;
       if (message !== null && message !== undefined && typeof message === 'string') {
         return message;
       }
     }
 
     // Try nested error format: { error: { message: string } }
-    if (errorData !== null && 'error' in errorData) {
-      const errorDataObj = errorData as { error: unknown };
-      const errorField = errorDataObj.error;
-      if (
-        errorField !== null &&
-        errorField !== undefined &&
-        typeof errorField === 'object' &&
-        'message' in errorField
-      ) {
-        const errorMessageObj = errorField as { message: unknown };
-        const errorMessage = errorMessageObj.message;
+    if ('error' in errorData) {
+      const errorField = errorData.error;
+      if (isNonNullObject(errorField) && 'message' in errorField) {
+        const errorMessage = errorField.message;
         if (errorMessage !== null && errorMessage !== undefined && typeof errorMessage === 'string') {
           return errorMessage;
         }
