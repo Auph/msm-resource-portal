@@ -180,8 +180,10 @@ import { useCategories } from '../../services/categories'
 export default defineComponent({
   name: 'AuthenticationSignupForm',
   setup () {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { completed, loading, state, signup, errors, validateFormBeforeProceed, checkEmailAvailability } = useSignup()
     const step: Ref<number> = ref(1)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { 
       state: categoriesState,
       getCategories
@@ -204,6 +206,7 @@ export default defineComponent({
 
     // Handle Continue button click - validate form before proceeding
     const handleContinue = (): void => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       const isValid = validateFormBeforeProceed()
       if (isValid && step.value === 1) {
         step.value = 2
@@ -240,7 +243,8 @@ export default defineComponent({
       state,
       step,
       handleContinue,
-      canContinue
+      canContinue,
+      checkEmailAvailability // Used in template via @input and @blur
     }
   }
 })
