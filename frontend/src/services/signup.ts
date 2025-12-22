@@ -193,22 +193,34 @@ const useSignup = () => {
    * Extracts error message from various error response formats
    */
   const extractErrorMessage = (errorData: unknown): string | null => {
-    if (!errorData || typeof errorData !== 'object') {
+    if (!errorData || typeof errorData !== 'object' || errorData === null) {
       return null;
     }
 
     // Try Strapi error format: { message: string }
-    if ('message' in errorData && typeof (errorData as { message: unknown }).message === 'string') {
-      return (errorData as { message: string }).message;
+    if (errorData !== null && 'message' in errorData) {
+      const messageObj = errorData as { message: unknown };
+      const message = messageObj.message;
+      if (message !== null && message !== undefined && typeof message === 'string') {
+        return message;
+      }
     }
 
     // Try nested error format: { error: { message: string } }
-    if ('error' in errorData && 
-        typeof (errorData as { error: unknown }).error === 'object' &&
-        (errorData as { error: { message?: unknown } }).error !== null) {
-      const errorObj = (errorData as { error: { message?: unknown } }).error;
-      if (errorObj && 'message' in errorObj && typeof errorObj.message === 'string') {
-        return errorObj.message;
+    if (errorData !== null && 'error' in errorData) {
+      const errorDataObj = errorData as { error: unknown };
+      const errorField = errorDataObj.error;
+      if (
+        errorField !== null &&
+        errorField !== undefined &&
+        typeof errorField === 'object' &&
+        'message' in errorField
+      ) {
+        const errorMessageObj = errorField as { message: unknown };
+        const errorMessage = errorMessageObj.message;
+        if (errorMessage !== null && errorMessage !== undefined && typeof errorMessage === 'string') {
+          return errorMessage;
+        }
       }
     }
 
