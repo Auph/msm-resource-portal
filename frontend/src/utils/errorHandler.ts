@@ -25,6 +25,7 @@ export const extractErrorMessage = (error: unknown): string => {
   // Handle Axios errors
   if (error instanceof Error && 'response' in error) {
     const axiosError = error as AxiosError;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const errorData = axiosError.response?.data;
 
     if (errorData) {

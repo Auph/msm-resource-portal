@@ -27,7 +27,8 @@ class ApiClient {
       async (config) => {
         const token = await getAuthenticationToken();
         if (token && config.headers) {
-          config.headers.Authorization = `Bearer ${token}`;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
         }
         return config;
       },

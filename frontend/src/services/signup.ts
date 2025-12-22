@@ -201,11 +201,10 @@ const useSignup = () => {
     // Try nested error format: { error: { message: string } }
     if ('error' in errorData && 
         typeof (errorData as { error: unknown }).error === 'object' &&
-        (errorData as { error: { message?: unknown } }).error !== null &&
-        'message' in (errorData as { error: { message?: unknown } }).error) {
-      const errorMessage = (errorData as { error: { message: unknown } }).error.message;
-      if (typeof errorMessage === 'string') {
-        return errorMessage;
+        (errorData as { error: { message?: unknown } }).error !== null) {
+      const errorObj = (errorData as { error: { message?: unknown } }).error;
+      if (errorObj && 'message' in errorObj && typeof errorObj.message === 'string') {
+        return errorObj.message;
       }
     }
 
@@ -283,8 +282,8 @@ const useSignup = () => {
         const errorData = error.response?.data;
         
         // Check if errorData is an empty object or has no useful data
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const hasData = errorData && typeof errorData === 'object' && Object.keys(errorData).length > 0;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const hasData = errorData && typeof errorData === 'object' && Object.keys(errorData as Record<string, unknown>).length > 0;
         
         // Check for Strapi error format with data array
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
