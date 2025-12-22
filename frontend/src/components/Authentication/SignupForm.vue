@@ -179,12 +179,23 @@ export default defineComponent({
       await getCategories()
     })
 
+    // Wrapper to ensure errors are caught
+    const handleSignup = async (): Promise<void> => {
+      try {
+        await signup()
+      } catch (error) {
+        // This should not happen as signup handles its own errors,
+        // but just in case, show a generic error
+        console.error('Unexpected error in signup:', error)
+      }
+    }
+
     return {
       categoriesState,
       completed,
       errors,
       loading,
-      signup,
+      signup: handleSignup,
       state,
       step,
     }
