@@ -82,6 +82,7 @@
         label="Email *"
         bottom-slots
         :error="errors.email !== null"
+        @blur="checkEmailAvailability(state.email)"
         required
       >
         <template v-slot:error>
@@ -177,7 +178,7 @@ import { useCategories } from '../../services/categories'
 export default defineComponent({
   name: 'AuthenticationSignupForm',
   setup () {
-    const { completed, loading, state, signup, errors, validateFormBeforeProceed } = useSignup()
+    const { completed, loading, state, signup, errors, validateFormBeforeProceed, checkEmailAvailability } = useSignup()
     const step: Ref<number> = ref(1)
     const { 
       state: categoriesState,
