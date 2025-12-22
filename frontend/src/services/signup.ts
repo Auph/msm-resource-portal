@@ -125,7 +125,7 @@ const useSignup = () => {
       })
       .finally(() => {
         loading.value = false;
-        resetErrors;
+        resetErrors();
       });
   };
 
@@ -157,9 +157,72 @@ const useSignup = () => {
       .catch((error: AxiosError) => {
         // Handle error.
         console.log('An error occurred:', error.response);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const signupErrors: InterfaceLoginError =
+          error.response && error.response.data ? error.response.data : null;
+
+        if (signupErrors !== null && signupErrors.data) {
+          for (const single of signupErrors.data) {
+            for (const message of single.messages) {
+              // Check for email/username already exists errors
+              const messageLower = message.message.toLowerCase();
+              if (
+                message.id === 'Auth.form.error.email.taken' ||
+                message.id === 'Auth.form.error.username.taken' ||
+                (messageLower.includes('email') && (
+                  messageLower.includes('already') ||
+                  messageLower.includes('taken') ||
+                  messageLower.includes('exists')
+                )) ||
+                (messageLower.includes('username') && (
+                  messageLower.includes('already') ||
+                  messageLower.includes('taken') ||
+                  messageLower.includes('exists')
+                ))
+              ) {
+                errors.email = 'This email is already registered. Please use a different email or try logging in.';
+                Notify.create({
+                  type: 'negative',
+                  message: 'This email is already registered. Please use a different email or try logging in.',
+                  position: 'top'
+                });
+              } else if (message.id === 'Auth.form.error.email.provide') {
+                errors.email = message.message;
+                Notify.create({
+                  type: 'negative',
+                  message: message.message,
+                  position: 'top'
+                });
+              } else if (message.id === 'Auth.form.error.password.provide' || message.id === 'Auth.form.error.password.matching') {
+                errors.password = message.message;
+                Notify.create({
+                  type: 'negative',
+                  message: message.message,
+                  position: 'top'
+                });
+              } else {
+                // Generic error handling
+                errors.others = message.message;
+                Notify.create({
+                  type: 'negative',
+                  message: message.message,
+                  position: 'top'
+                });
+              }
+            }
+          }
+        } else {
+          // Fallback for unexpected error format
+          const errorMessage = error.response?.data?.message || 'An error occurred during registration. Please try again.';
+          errors.others = errorMessage;
+          Notify.create({
+            type: 'negative',
+            message: errorMessage,
+            position: 'top'
+          });
+        }
       })
       .finally(() => {
-        Notify.create('Something went wrong');
         loading.value = false;
       });
   };
