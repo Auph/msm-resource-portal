@@ -294,11 +294,21 @@ const useSignup = () => {
       const errorData = axiosError.response?.data;
       
       // For 400 errors, always show duplicate email message immediately
+      // This ensures the user always sees an error message
       if (statusCode === 400) {
-        // Show error immediately for 400 status
-        showError('email', DUPLICATE_EMAIL_MESSAGE);
+        // Show error notification immediately - this MUST be called
+        Notify.create({
+          type: 'negative',
+          message: DUPLICATE_EMAIL_MESSAGE,
+          position: 'top',
+          timeout: 5000,
+          actions: [{ icon: 'close', color: 'white' }]
+        });
         
-        // Try to process Strapi errors if data exists (but we've already shown the error)
+        // Also set the field error
+        errors.email = DUPLICATE_EMAIL_MESSAGE;
+        
+        // Try to process Strapi errors if data exists to potentially get a better message
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const hasData = errorData && typeof errorData === 'object' && Object.keys(errorData as Record<string, unknown>).length > 0;
         
@@ -306,7 +316,7 @@ const useSignup = () => {
         if (hasData && errorData && typeof errorData === 'object' && 'data' in errorData && Array.isArray((errorData as { data: unknown }).data) && (errorData as { data: unknown[] }).data.length > 0) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const signupErrors: InterfaceLoginError = errorData as InterfaceLoginError;
-          // Process errors to potentially update the message, but error is already shown
+          // Process errors to potentially update the message
           processStrapiErrors(signupErrors);
         }
       } else {
