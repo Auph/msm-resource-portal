@@ -170,6 +170,16 @@ const useSignup = () => {
    * Shows error notification and sets error field
    */
   const showError = (field: keyof InterfaceSignupErrors, message: string): void => {
+    // Always show notification first
+    Notify.create({
+      type: 'negative',
+      message,
+      position: 'top',
+      timeout: 5000,
+      actions: [{ icon: 'close', color: 'white' }]
+    });
+    
+    // Then set the field error
     if (field === 'email') {
       errors.email = message;
     } else if (field === 'password') {
@@ -177,12 +187,6 @@ const useSignup = () => {
     } else {
       errors.others = message;
     }
-    
-    Notify.create({
-      type: 'negative',
-      message,
-      position: 'top'
-    });
   };
 
   /**
@@ -219,9 +223,7 @@ const useSignup = () => {
     
     for (const single of signupErrors.data) {
       for (const message of single.messages) {
-        const messageLower = message.message.toLowerCase();
-        
-        // Check for duplicate email/username errors
+        // Check for duplicate email/username errors first
         if (
           message.id === ERROR_IDS.EMAIL_TAKEN ||
           message.id === ERROR_IDS.USERNAME_TAKEN ||
@@ -238,8 +240,8 @@ const useSignup = () => {
         } else if (message.id === ERROR_IDS.PASSWORD_PROVIDE || message.id === ERROR_IDS.PASSWORD_MATCHING) {
           showError('password', message.message);
           handled = true;
-        } else {
-          // Generic error handling
+        } else if (message.message) {
+          // Generic error handling - only if we have a message
           showError('others', message.message);
           handled = true;
         }
@@ -252,7 +254,8 @@ const useSignup = () => {
   /**
    * Signs up the user
    */
-  const signup = (): void => {
+  const signup = async (): Promise<void> => {
+    // Validate first
     if (!signupValidation()) {
       return;
     }
@@ -260,63 +263,70 @@ const useSignup = () => {
     resetErrors();
     loading.value = true;
 
-    axios
-      .post(String(process.env.apiUrl) + '/auth/local/register', {
+    try {
+      await axios.post(String(process.env.apiUrl) + '/auth/local/register', {
         firstName: state.firstName,
         lastName: state.lastName,
         interests: state.interests as number[],
         username: state.email?.toLowerCase(),
         email: state.email?.toLowerCase(),
         password: state.password
-      })
-      .then(() => {
-        completed.value = true;
-        reset();
-      })
-      .catch((error: AxiosError) => {
-        console.error('Registration error:', error.response);
-        resetErrors();
-        
-        const statusCode = error.response?.status;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const errorData = error.response?.data;
-        
+      });
+      
+      completed.value = true;
+      reset();
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      const statusCode = axiosError.response?.status;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const errorData = axiosError.response?.data;
+      
+      // Always show an error - default to duplicate email for 400 errors
+      if (statusCode === 400) {
         // Check if errorData is an empty object or has no useful data
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const hasData = errorData && typeof errorData === 'object' && Object.keys(errorData as Record<string, unknown>).length > 0;
         
         // Check for Strapi error format with data array
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        if (hasData && errorData.data && Array.isArray(errorData.data) && errorData.data.length > 0) {
+        if (hasData && errorData && typeof errorData === 'object' && 'data' in errorData && Array.isArray((errorData as { data: unknown }).data) && (errorData as { data: unknown[] }).data.length > 0) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const signupErrors: InterfaceLoginError = errorData as InterfaceLoginError;
-          processStrapiErrors(signupErrors);
+          const handled = processStrapiErrors(signupErrors);
+          if (!handled) {
+            // Fallback if processStrapiErrors didn't handle it
+            showError('email', DUPLICATE_EMAIL_MESSAGE);
+          }
         } else if (hasData) {
           // Handle other error formats with actual data
           const errorMessage = extractErrorMessage(errorData);
           
-          if (errorMessage) {
+          if (errorMessage && errorMessage !== 'An unexpected error occurred') {
             if (isDuplicateEmailError(errorMessage)) {
               showError('email', DUPLICATE_EMAIL_MESSAGE);
             } else {
               showError('others', errorMessage);
             }
           } else {
-            showError('others', GENERIC_ERROR_MESSAGE);
+            // No useful error message, assume duplicate email for 400
+            showError('email', DUPLICATE_EMAIL_MESSAGE);
           }
         } else {
-          // No error data or empty data object - check status code
-          // 400 Bad Request often indicates validation errors like duplicate email
-          if (statusCode === 400) {
-            showError('email', 'This email is already registered or invalid. Please use a different email or try logging in.');
-          } else {
-            showError('others', GENERIC_ERROR_MESSAGE);
-          }
+          // No error data or empty data object - assume duplicate email for 400
+          showError('email', DUPLICATE_EMAIL_MESSAGE);
         }
-      })
-      .finally(() => {
-        loading.value = false;
-      });
+      } else {
+        // Other status codes
+        const errorMessage = extractErrorMessage(axiosError);
+        if (errorMessage && errorMessage !== 'An unexpected error occurred') {
+          showError('others', errorMessage);
+        } else {
+          showError('others', GENERIC_ERROR_MESSAGE);
+        }
+      }
+    } finally {
+      loading.value = false;
+    }
   };
 
   return {

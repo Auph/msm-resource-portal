@@ -25,8 +25,9 @@
 </div>
 <q-form
   v-else
-  @submit="signup"
+  @submit.prevent="signup"
   class="login-form"
+  ref="signupForm"
   >
   <q-stepper
     flat
@@ -117,6 +118,14 @@
           {{ errors.passwordconfirm }}
         </template>
       </q-input>
+      
+      <q-card
+        v-if="errors.others"
+        flat
+        class="q-mt-md q-py-sm q-px-md text-red-8 bg-red-1 text-body2"
+      >
+        <div v-html="errors.others" />
+      </q-card>
     </q-step>
 
     <q-step
