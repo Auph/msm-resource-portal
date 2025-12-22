@@ -527,11 +527,22 @@ const useSignup = () => {
       const { login } = useUser();
       await login(response.data);
       
-      // Redirect to dashboard
-      void Router.push('/dashboard');
+      // Set loading to false
+      loading.value = false;
+      
+      // Reset form state
+      reset();
+      
+      // Redirect to dashboard (which redirects to /explore)
+      // Use setTimeout to ensure state updates are processed before redirect
+      setTimeout(() => {
+        void Router.push('/dashboard').catch(() => {
+          // If redirect fails, try direct navigation as fallback
+          window.location.href = '/dashboard';
+        });
+      }, 100);
       
       completed.value = true;
-      reset();
     } catch (error) {
       const axiosError = error as AxiosError;
       const statusCode = axiosError.response?.status;
