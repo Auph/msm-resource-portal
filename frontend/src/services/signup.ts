@@ -493,6 +493,7 @@ const useSignup = () => {
     loading.value = true;
 
     try {
+      // Use same pattern as authentication service (apiUrl may already include /api)
       await axios.post(String(process.env.apiUrl) + '/auth/local/register', {
         firstName: state.firstName,
         lastName: state.lastName,
