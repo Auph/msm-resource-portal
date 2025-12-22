@@ -8,6 +8,20 @@ import {
   InterfaceStateSignup
 } from 'src/interfaces';
 
+// Constants
+const DUPLICATE_EMAIL_MESSAGE = 'This email is already registered. Please use a different email or try logging in.';
+const GENERIC_ERROR_MESSAGE = 'An error occurred during registration. Please try again.';
+const MIN_PASSWORD_LENGTH = 8;
+
+// Error message IDs
+const ERROR_IDS = {
+  EMAIL_TAKEN: 'Auth.form.error.email.taken',
+  USERNAME_TAKEN: 'Auth.form.error.username.taken',
+  EMAIL_PROVIDE: 'Auth.form.error.email.provide',
+  PASSWORD_PROVIDE: 'Auth.form.error.password.provide',
+  PASSWORD_MATCHING: 'Auth.form.error.password.matching'
+} as const;
+
 const defaultState: InterfaceStateSignup = {
   firstName: null,
   lastName: null,
@@ -40,9 +54,10 @@ const useSignup = () => {
   const reset = (): void => {
     state.firstName = defaultState.firstName;
     state.lastName = defaultState.lastName;
+    // Keep email for verification step
     // state.email = defaultState.email
     state.password = defaultState.password;
-    state.passwordconfirm = defaultState.password;
+    state.passwordconfirm = defaultState.passwordconfirm;
   };
   const resetErrors = (): void => {
     errors.firstName = null;
@@ -63,27 +78,30 @@ const useSignup = () => {
   const signupValidation = (): boolean => {
     resetErrors();
 
-    if (state.firstName === null) {
-      errors.firstName = 'Is required';
+    let isValid = true;
+
+    if (!state.firstName || state.firstName.trim() === '') {
+      errors.firstName = 'First name is required';
+      isValid = false;
     }
-    if (state.lastName === null) {
-      errors.lastName = 'Is required';
+    if (!state.lastName || state.lastName.trim() === '') {
+      errors.lastName = 'Last name is required';
+      isValid = false;
     }
-    if (!validateEmail(String(state.email))) {
-      errors.email = 'Must be an email';
+    if (!state.email || !validateEmail(String(state.email))) {
+      errors.email = 'A valid email address is required';
+      isValid = false;
     }
-    if (state.password === null || state.password.length <= 8) {
-      errors.password = 'Is required and be longer than 8 characters';
+    if (!state.password || state.password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`;
+      isValid = false;
     }
     if (state.passwordconfirm !== state.password) {
-      errors.passwordconfirm = 'Must be same as password';
+      errors.passwordconfirm = 'Passwords do not match';
+      isValid = false;
     }
 
-    return (
-      errors.email === null &&
-      errors.password === null &&
-      errors.passwordconfirm === null
-    );
+    return isValid;
   };
 
   /**
@@ -130,15 +148,117 @@ const useSignup = () => {
   };
 
   /**
+   * Checks if error message indicates duplicate email/username
+   */
+  const isDuplicateEmailError = (message: string): boolean => {
+    const messageLower = message.toLowerCase();
+    return (
+      messageLower.includes('email') && (
+        messageLower.includes('already') ||
+        messageLower.includes('taken') ||
+        messageLower.includes('exists')
+      ) ||
+      messageLower.includes('username') && (
+        messageLower.includes('already') ||
+        messageLower.includes('taken') ||
+        messageLower.includes('exists')
+      )
+    );
+  };
+
+  /**
+   * Shows error notification and sets error field
+   */
+  const showError = (field: keyof InterfaceSignupErrors, message: string): void => {
+    if (field === 'email') {
+      errors.email = message;
+    } else if (field === 'password') {
+      errors.password = message;
+    } else {
+      errors.others = message;
+    }
+    
+    Notify.create({
+      type: 'negative',
+      message,
+      position: 'top'
+    });
+  };
+
+  /**
+   * Extracts error message from various error response formats
+   */
+  const extractErrorMessage = (errorData: unknown): string | null => {
+    if (!errorData || typeof errorData !== 'object') {
+      return null;
+    }
+
+    // Try Strapi error format: { message: string }
+    if ('message' in errorData && typeof (errorData as { message: unknown }).message === 'string') {
+      return (errorData as { message: string }).message;
+    }
+
+    // Try nested error format: { error: { message: string } }
+    if ('error' in errorData && 
+        typeof (errorData as { error: unknown }).error === 'object' &&
+        (errorData as { error: { message?: unknown } }).error !== null &&
+        'message' in (errorData as { error: { message?: unknown } }).error) {
+      const errorMessage = (errorData as { error: { message: unknown } }).error.message;
+      if (typeof errorMessage === 'string') {
+        return errorMessage;
+      }
+    }
+
+    return null;
+  };
+
+  /**
+   * Processes Strapi error format with data array
+   */
+  const processStrapiErrors = (signupErrors: InterfaceLoginError): boolean => {
+    let handled = false;
+    
+    for (const single of signupErrors.data) {
+      for (const message of single.messages) {
+        const messageLower = message.message.toLowerCase();
+        
+        // Check for duplicate email/username errors
+        if (
+          message.id === ERROR_IDS.EMAIL_TAKEN ||
+          message.id === ERROR_IDS.USERNAME_TAKEN ||
+          isDuplicateEmailError(message.message)
+        ) {
+          showError('email', DUPLICATE_EMAIL_MESSAGE);
+          return true; // Exit early after showing email error
+        }
+        
+        // Handle specific error types
+        if (message.id === ERROR_IDS.EMAIL_PROVIDE) {
+          showError('email', message.message);
+          handled = true;
+        } else if (message.id === ERROR_IDS.PASSWORD_PROVIDE || message.id === ERROR_IDS.PASSWORD_MATCHING) {
+          showError('password', message.message);
+          handled = true;
+        } else {
+          // Generic error handling
+          showError('others', message.message);
+          handled = true;
+        }
+      }
+    }
+    
+    return handled;
+  };
+
+  /**
    * Signs up the user
    */
-  const signup = () => {
-    if (signupValidation()) {
-      resetErrors();
-    } else {
+  const signup = (): void => {
+    if (!signupValidation()) {
       return;
     }
 
+    resetErrors();
     loading.value = true;
 
     axios
@@ -155,8 +275,7 @@ const useSignup = () => {
         reset();
       })
       .catch((error: AxiosError) => {
-        // Handle error.
-        console.log('An error occurred:', error.response);
+        console.error('Registration error:', error.response);
         resetErrors();
         
         const statusCode = error.response?.status;
@@ -172,113 +291,27 @@ const useSignup = () => {
         if (hasData && errorData.data && Array.isArray(errorData.data) && errorData.data.length > 0) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const signupErrors: InterfaceLoginError = errorData as InterfaceLoginError;
-          
-          for (const single of signupErrors.data) {
-            for (const message of single.messages) {
-              // Check for email/username already exists errors
-              const messageLower = message.message.toLowerCase();
-              if (
-                message.id === 'Auth.form.error.email.taken' ||
-                message.id === 'Auth.form.error.username.taken' ||
-                (messageLower.includes('email') && (
-                  messageLower.includes('already') ||
-                  messageLower.includes('taken') ||
-                  messageLower.includes('exists')
-                )) ||
-                (messageLower.includes('username') && (
-                  messageLower.includes('already') ||
-                  messageLower.includes('taken') ||
-                  messageLower.includes('exists')
-                ))
-              ) {
-                errors.email = 'This email is already registered. Please use a different email or try logging in.';
-                Notify.create({
-                  type: 'negative',
-                  message: 'This email is already registered. Please use a different email or try logging in.',
-                  position: 'top'
-                });
-                return; // Exit early after showing email error
-              } else if (message.id === 'Auth.form.error.email.provide') {
-                errors.email = message.message;
-                Notify.create({
-                  type: 'negative',
-                  message: message.message,
-                  position: 'top'
-                });
-              } else if (message.id === 'Auth.form.error.password.provide' || message.id === 'Auth.form.error.password.matching') {
-                errors.password = message.message;
-                Notify.create({
-                  type: 'negative',
-                  message: message.message,
-                  position: 'top'
-                });
-              } else {
-                // Generic error handling
-                errors.others = message.message;
-                Notify.create({
-                  type: 'negative',
-                  message: message.message,
-                  position: 'top'
-                });
-              }
-            }
-          }
+          processStrapiErrors(signupErrors);
         } else if (hasData) {
           // Handle other error formats with actual data
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          const errorMessage = (errorData as { message?: string; error?: { message?: string } })?.message || 
-                               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                               (errorData as { error?: { message?: string } })?.error?.message ||
-                               'An error occurred during registration. Please try again.';
+          const errorMessage = extractErrorMessage(errorData);
           
-          // Check if it's an email/username error by checking the message content
-          const errorMessageLower = String(errorMessage).toLowerCase();
-          if (
-            errorMessageLower.includes('email') && (
-              errorMessageLower.includes('already') ||
-              errorMessageLower.includes('taken') ||
-              errorMessageLower.includes('exists')
-            ) ||
-            errorMessageLower.includes('username') && (
-              errorMessageLower.includes('already') ||
-              errorMessageLower.includes('taken') ||
-              errorMessageLower.includes('exists')
-            )
-          ) {
-            errors.email = 'This email is already registered. Please use a different email or try logging in.';
-            Notify.create({
-              type: 'negative',
-              message: 'This email is already registered. Please use a different email or try logging in.',
-              position: 'top'
-            });
+          if (errorMessage) {
+            if (isDuplicateEmailError(errorMessage)) {
+              showError('email', DUPLICATE_EMAIL_MESSAGE);
+            } else {
+              showError('others', errorMessage);
+            }
           } else {
-            errors.others = String(errorMessage);
-            Notify.create({
-              type: 'negative',
-              message: String(errorMessage),
-              position: 'top'
-            });
+            showError('others', GENERIC_ERROR_MESSAGE);
           }
         } else {
           // No error data or empty data object - check status code
           // 400 Bad Request often indicates validation errors like duplicate email
           if (statusCode === 400) {
-            // Most likely a duplicate email or validation error
-            errors.email = 'This email is already registered or invalid. Please use a different email or try logging in.';
-            Notify.create({
-              type: 'negative',
-              message: 'This email is already registered or invalid. Please use a different email or try logging in.',
-              position: 'top'
-            });
+            showError('email', 'This email is already registered or invalid. Please use a different email or try logging in.');
           } else {
-            // Other status codes
-            const errorMessage = 'An error occurred during registration. Please try again.';
-            errors.others = errorMessage;
-            Notify.create({
-              type: 'negative',
-              message: errorMessage,
-              position: 'top'
-            });
+            showError('others', GENERIC_ERROR_MESSAGE);
           }
         }
       })
