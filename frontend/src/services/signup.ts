@@ -431,7 +431,7 @@ const useSignup = () => {
     sendEmailVerification,
     signup,
     state,
-    validateEmailAvailability
+    validateFormBeforeProceed
   };
 };
 

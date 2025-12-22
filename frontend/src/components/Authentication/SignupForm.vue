@@ -177,7 +177,7 @@ import { useCategories } from '../../services/categories'
 export default defineComponent({
   name: 'AuthenticationSignupForm',
   setup () {
-    const { completed, loading, state, signup, errors, validateEmailAvailability } = useSignup()
+    const { completed, loading, state, signup, errors, validateFormBeforeProceed } = useSignup()
     const step: Ref<number> = ref(1)
     const { 
       state: categoriesState,
@@ -199,9 +199,9 @@ export default defineComponent({
       }
     }
 
-    // Handle Continue button click - validate email before proceeding
-    const handleContinue = async (): Promise<void> => {
-      const isValid = await validateEmailAvailability()
+    // Handle Continue button click - validate form before proceeding
+    const handleContinue = (): void => {
+      const isValid = validateFormBeforeProceed()
       if (isValid && step.value === 1) {
         step.value = 2
       }
