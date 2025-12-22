@@ -24,11 +24,28 @@ module.exports = createCoreController('api::item.item', ({ strapi }) => ({
             s3Options: { credentials: { accessKeyId, secretAccessKey }, params },
         } = strapi.plugin('upload').config('providerOptions');
 
+        // For DigitalOcean Spaces, endpoint should be like "fra1.digitaloceanspaces.com"
+        // not "bucketname.fra1.digitaloceanspaces.com"
+        // Extract just the region endpoint if bucket name is included
+        let regionEndpoint = baseUrl;
+        if (baseUrl && typeof baseUrl === 'string' && baseUrl.includes('.digitaloceanspaces.com')) {
+            // Remove protocol if present
+            let endpoint = baseUrl.replace(/^https?:\/\//, '');
+            // Pattern: bucketname.region.digitaloceanspaces.com -> region.digitaloceanspaces.com
+            const parts = endpoint.split('.');
+            if (parts.length > 2 && parts[parts.length - 2] === 'digitaloceanspaces') {
+                // Extract region (e.g., "fra1") and domain
+                const region = parts[parts.length - 3];
+                regionEndpoint = `${region}.digitaloceanspaces.com`;
+            }
+        }
+
         const s3 = new AWS.S3({
             apiVersion: '2006-03-01',
-            endpoint: new AWS.Endpoint(baseUrl),
+            endpoint: new AWS.Endpoint(regionEndpoint),
             accessKeyId,
             secretAccessKey,
+            s3ForcePathStyle: false // Use virtual-hosted-style for DigitalOcean Spaces
         });
 
         const url = s3.getSignedUrl('getObject', {

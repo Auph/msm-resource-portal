@@ -157,64 +157,108 @@ const useSignup = () => {
       .catch((error: AxiosError) => {
         // Handle error.
         console.log('An error occurred:', error.response);
+        resetErrors();
+        
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const signupErrors: InterfaceLoginError =
-          error.response && error.response.data ? error.response.data : null;
-
-        if (signupErrors !== null && signupErrors.data) {
-          for (const single of signupErrors.data) {
-            for (const message of single.messages) {
-              // Check for email/username already exists errors
-              const messageLower = message.message.toLowerCase();
-              if (
-                message.id === 'Auth.form.error.email.taken' ||
-                message.id === 'Auth.form.error.username.taken' ||
-                (messageLower.includes('email') && (
-                  messageLower.includes('already') ||
-                  messageLower.includes('taken') ||
-                  messageLower.includes('exists')
-                )) ||
-                (messageLower.includes('username') && (
-                  messageLower.includes('already') ||
-                  messageLower.includes('taken') ||
-                  messageLower.includes('exists')
-                ))
-              ) {
-                errors.email = 'This email is already registered. Please use a different email or try logging in.';
-                Notify.create({
-                  type: 'negative',
-                  message: 'This email is already registered. Please use a different email or try logging in.',
-                  position: 'top'
-                });
-              } else if (message.id === 'Auth.form.error.email.provide') {
-                errors.email = message.message;
-                Notify.create({
-                  type: 'negative',
-                  message: message.message,
-                  position: 'top'
-                });
-              } else if (message.id === 'Auth.form.error.password.provide' || message.id === 'Auth.form.error.password.matching') {
-                errors.password = message.message;
-                Notify.create({
-                  type: 'negative',
-                  message: message.message,
-                  position: 'top'
-                });
-              } else {
-                // Generic error handling
-                errors.others = message.message;
-                Notify.create({
-                  type: 'negative',
-                  message: message.message,
-                  position: 'top'
-                });
+        const errorData = error.response?.data;
+        
+        if (errorData) {
+          // Check for Strapi error format with data array
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          if (errorData.data && Array.isArray(errorData.data)) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const signupErrors: InterfaceLoginError = errorData as InterfaceLoginError;
+            
+            for (const single of signupErrors.data) {
+              for (const message of single.messages) {
+                // Check for email/username already exists errors
+                const messageLower = message.message.toLowerCase();
+                if (
+                  message.id === 'Auth.form.error.email.taken' ||
+                  message.id === 'Auth.form.error.username.taken' ||
+                  (messageLower.includes('email') && (
+                    messageLower.includes('already') ||
+                    messageLower.includes('taken') ||
+                    messageLower.includes('exists')
+                  )) ||
+                  (messageLower.includes('username') && (
+                    messageLower.includes('already') ||
+                    messageLower.includes('taken') ||
+                    messageLower.includes('exists')
+                  ))
+                ) {
+                  errors.email = 'This email is already registered. Please use a different email or try logging in.';
+                  Notify.create({
+                    type: 'negative',
+                    message: 'This email is already registered. Please use a different email or try logging in.',
+                    position: 'top'
+                  });
+                  return; // Exit early after showing email error
+                } else if (message.id === 'Auth.form.error.email.provide') {
+                  errors.email = message.message;
+                  Notify.create({
+                    type: 'negative',
+                    message: message.message,
+                    position: 'top'
+                  });
+                } else if (message.id === 'Auth.form.error.password.provide' || message.id === 'Auth.form.error.password.matching') {
+                  errors.password = message.message;
+                  Notify.create({
+                    type: 'negative',
+                    message: message.message,
+                    position: 'top'
+                  });
+                } else {
+                  // Generic error handling
+                  errors.others = message.message;
+                  Notify.create({
+                    type: 'negative',
+                    message: message.message,
+                    position: 'top'
+                  });
+                }
               }
+            }
+          } else {
+            // Handle other error formats
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            const errorMessage = (errorData as { message?: string; error?: { message?: string } })?.message || 
+                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                                 (errorData as { error?: { message?: string } })?.error?.message ||
+                                 'An error occurred during registration. Please try again.';
+            
+            // Check if it's an email/username error by checking the message content
+            const errorMessageLower = String(errorMessage).toLowerCase();
+            if (
+              errorMessageLower.includes('email') && (
+                errorMessageLower.includes('already') ||
+                errorMessageLower.includes('taken') ||
+                errorMessageLower.includes('exists')
+              ) ||
+              errorMessageLower.includes('username') && (
+                errorMessageLower.includes('already') ||
+                errorMessageLower.includes('taken') ||
+                errorMessageLower.includes('exists')
+              )
+            ) {
+              errors.email = 'This email is already registered. Please use a different email or try logging in.';
+              Notify.create({
+                type: 'negative',
+                message: 'This email is already registered. Please use a different email or try logging in.',
+                position: 'top'
+              });
+            } else {
+              errors.others = String(errorMessage);
+              Notify.create({
+                type: 'negative',
+                message: String(errorMessage),
+                position: 'top'
+              });
             }
           }
         } else {
-          // Fallback for unexpected error format
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          const errorMessage: string = (error.response?.data as { message?: string })?.message || 'An error occurred during registration. Please try again.';
+          // No error data, show generic message
+          const errorMessage = 'An error occurred during registration. Please try again.';
           errors.others = errorMessage;
           Notify.create({
             type: 'negative',
