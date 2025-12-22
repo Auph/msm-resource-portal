@@ -76,7 +76,7 @@
 
       <q-input
         filled
-        class="q-mb-sm q-pb-none"
+        class="q-mb-md"
         type="email"
         v-model="state.email"
         label="Email *"
@@ -85,7 +85,7 @@
         required
       >
         <template v-slot:error>
-          {{ errors.email }}
+          <div class="q-mt-xs">{{ errors.email }}</div>
         </template>
       </q-input>
 
@@ -152,7 +152,16 @@
     <template v-slot:navigation>
       <q-stepper-navigation>
         <q-btn unelevated class="q-py-xs q-px-sm" color="accent" v-if="step > 1" label="Create Account" type="submit" />
-        <q-btn unelevated class="q-py-xs q-px-sm" color="accent" v-else @click="$refs.stepper.next()" :label="'Continue'" />
+        <q-btn 
+          unelevated 
+          class="q-py-xs q-px-sm" 
+          color="accent" 
+          v-else 
+          @click="handleContinue" 
+          :label="'Continue'"
+          :disable="!canContinue() || loading"
+          :loading="loading"
+        />
         <q-btn unelevated class="q-py-xs" v-if="step > 1" flat color="accent" @click="$refs.stepper.previous()" label="Back" />
       </q-stepper-navigation>
     </template>
@@ -168,7 +177,7 @@ import { useCategories } from '../../services/categories'
 export default defineComponent({
   name: 'AuthenticationSignupForm',
   setup () {
-    const { completed, loading, state, signup, errors } = useSignup()
+    const { completed, loading, state, signup, errors, validateEmailAvailability } = useSignup()
     const step: Ref<number> = ref(1)
     const { 
       state: categoriesState,
@@ -190,6 +199,35 @@ export default defineComponent({
       }
     }
 
+    // Handle Continue button click - validate email before proceeding
+    const handleContinue = async (): Promise<void> => {
+      const isValid = await validateEmailAvailability()
+      if (isValid && step.value === 1) {
+        step.value = 2
+      }
+    }
+
+    // Check if Continue button should be disabled
+    const canContinue = (): boolean => {
+      // Basic validation - all required fields must be filled
+      const hasRequiredFields = 
+        state.firstName && 
+        state.lastName && 
+        state.email && 
+        state.password && 
+        state.passwordconfirm
+      
+      // Don't allow if there are any errors
+      const hasErrors = 
+        errors.firstName !== null ||
+        errors.lastName !== null ||
+        errors.email !== null ||
+        errors.password !== null ||
+        errors.passwordconfirm !== null
+      
+      return hasRequiredFields && !hasErrors && !loading.value
+    }
+
     return {
       categoriesState,
       completed,
@@ -198,6 +236,8 @@ export default defineComponent({
       signup: handleSignup,
       state,
       step,
+      handleContinue,
+      canContinue
     }
   }
 })

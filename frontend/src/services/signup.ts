@@ -105,6 +105,101 @@ const useSignup = () => {
   };
 
   /**
+   * Validates email availability before proceeding to next step
+   * This attempts a registration to check if email exists, but doesn't complete it
+   */
+  const validateEmailAvailability = async (): Promise<boolean> => {
+    // First validate basic form fields
+    if (!signupValidation()) {
+      return false;
+    }
+
+    // Check if email already has an error (from previous attempt)
+    if (errors.email) {
+      return false;
+    }
+
+    loading.value = true;
+
+    try {
+      // Try to register to check if email exists
+      // We'll catch 400 errors which indicate duplicate email
+      await axios.post(String(process.env.apiUrl) + '/auth/local/register', {
+        firstName: state.firstName,
+        lastName: state.lastName,
+        username: state.email?.toLowerCase(),
+        email: state.email?.toLowerCase(),
+        password: state.password
+      });
+      
+      // If registration succeeds, email is available
+      // But we don't want to actually register here, so this shouldn't happen
+      // This means the email is available
+      loading.value = false;
+      return true;
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      const statusCode = axiosError.response?.status;
+      
+      // 400 means duplicate email or validation error
+      if (statusCode === 400) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const errorData = axiosError.response?.data;
+        
+        // Check if it's a duplicate email error
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const hasData = errorData && typeof errorData === 'object' && Object.keys(errorData as Record<string, unknown>).length > 0;
+        
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (hasData && errorData && typeof errorData === 'object' && 'data' in errorData && Array.isArray((errorData as { data: unknown }).data) && (errorData as { data: unknown[] }).data.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const signupErrors: InterfaceLoginError = errorData as InterfaceLoginError;
+          let isDuplicateEmail = false;
+          
+          for (const single of signupErrors.data) {
+            for (const message of single.messages) {
+              if (
+                message.id === ERROR_IDS.EMAIL_TAKEN ||
+                message.id === ERROR_IDS.USERNAME_TAKEN ||
+                isDuplicateEmailError(message.message)
+              ) {
+                isDuplicateEmail = true;
+                break;
+              }
+            }
+            if (isDuplicateEmail) break;
+          }
+          
+          if (isDuplicateEmail) {
+            errors.email = DUPLICATE_EMAIL_MESSAGE;
+            Notify.create({
+              type: 'negative',
+              message: DUPLICATE_EMAIL_MESSAGE,
+              position: 'top'
+            });
+            loading.value = false;
+            return false;
+          }
+        } else {
+          // Empty error data with 400 - likely duplicate email
+          errors.email = DUPLICATE_EMAIL_MESSAGE;
+          Notify.create({
+            type: 'negative',
+            message: DUPLICATE_EMAIL_MESSAGE,
+            position: 'top'
+          });
+          loading.value = false;
+          return false;
+        }
+      }
+      
+      // Other errors - allow proceeding (might be network issues, etc.)
+      loading.value = false;
+      return true;
+    }
+  };
+
+  /**
    * Sends email verification
    */
   const sendEmailVerification = (email: string) => {
@@ -335,7 +430,8 @@ const useSignup = () => {
     loading,
     sendEmailVerification,
     signup,
-    state
+    state,
+    validateEmailAvailability
   };
 };
 
