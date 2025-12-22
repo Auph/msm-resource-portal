@@ -170,10 +170,10 @@ const useSignup = () => {
    * Shows error notification and sets error field
    */
   const showError = (field: keyof InterfaceSignupErrors, message: string): void => {
-    // Always show notification first
+    // Always show notification first - ensure it's called synchronously
     Notify.create({
       type: 'negative',
-      message,
+      message: message,
       position: 'top',
       timeout: 5000,
       actions: [{ icon: 'close', color: 'white' }]
@@ -293,39 +293,21 @@ const useSignup = () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const errorData = axiosError.response?.data;
       
-      // Always show an error - default to duplicate email for 400 errors
+      // For 400 errors, always show duplicate email message immediately
       if (statusCode === 400) {
-        // Check if errorData is an empty object or has no useful data
+        // Show error immediately for 400 status
+        showError('email', DUPLICATE_EMAIL_MESSAGE);
+        
+        // Try to process Strapi errors if data exists (but we've already shown the error)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const hasData = errorData && typeof errorData === 'object' && Object.keys(errorData as Record<string, unknown>).length > 0;
         
-        // Check for Strapi error format with data array
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (hasData && errorData && typeof errorData === 'object' && 'data' in errorData && Array.isArray((errorData as { data: unknown }).data) && (errorData as { data: unknown[] }).data.length > 0) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const signupErrors: InterfaceLoginError = errorData as InterfaceLoginError;
-          const handled = processStrapiErrors(signupErrors);
-          if (!handled) {
-            // Fallback if processStrapiErrors didn't handle it
-            showError('email', DUPLICATE_EMAIL_MESSAGE);
-          }
-        } else if (hasData) {
-          // Handle other error formats with actual data
-          const errorMessage = extractErrorMessage(errorData);
-          
-          if (errorMessage && errorMessage !== 'An unexpected error occurred') {
-            if (isDuplicateEmailError(errorMessage)) {
-              showError('email', DUPLICATE_EMAIL_MESSAGE);
-            } else {
-              showError('others', errorMessage);
-            }
-          } else {
-            // No useful error message, assume duplicate email for 400
-            showError('email', DUPLICATE_EMAIL_MESSAGE);
-          }
-        } else {
-          // No error data or empty data object - assume duplicate email for 400
-          showError('email', DUPLICATE_EMAIL_MESSAGE);
+          // Process errors to potentially update the message, but error is already shown
+          processStrapiErrors(signupErrors);
         }
       } else {
         // Other status codes
