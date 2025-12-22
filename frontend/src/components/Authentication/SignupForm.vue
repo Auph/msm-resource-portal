@@ -216,20 +216,22 @@ export default defineComponent({
     // Check if Continue button should be disabled
     const canContinue = (): boolean => {
       // Basic validation - all required fields must be filled
-      const hasRequiredFields = 
+      const hasRequiredFields = Boolean(
         state.firstName && 
         state.lastName && 
         state.email && 
         state.password && 
         state.passwordconfirm
+      )
       
       // Don't allow if there are any errors
-      const hasErrors = 
+      const hasErrors = Boolean(
         errors.firstName !== null ||
         errors.lastName !== null ||
         errors.email !== null ||
         errors.password !== null ||
         errors.passwordconfirm !== null
+      )
       
       return hasRequiredFields && !hasErrors && !loading.value
     }
