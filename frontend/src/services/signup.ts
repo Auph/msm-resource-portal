@@ -127,8 +127,14 @@ const useSignup = () => {
     try {
       // Try to register to check if email exists
       // We'll catch 400 errors which indicate duplicate email
-      // Strapi v4 requires /api prefix
-      await axios.post(String(process.env.apiUrl) + '/api/auth/local/register', {
+      // Construct URL same way as signup function
+      const apiBaseUrl = String(process.env.apiUrl);
+      const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+      const checkUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/auth/local/register`
+        : `${baseUrl}/api/auth/local/register`;
+      
+      await axios.post(checkUrl, {
         firstName: state.firstName,
         lastName: state.lastName,
         username: state.email?.toLowerCase(),
@@ -214,10 +220,13 @@ const useSignup = () => {
     completed.value = false;
     loading.value = true;
 
-    // Strapi v4 requires /api prefix
+    // Construct URL same way as signup function
     const apiBaseUrl = String(process.env.apiUrl);
-    const emailConfirmUrl = apiBaseUrl + '/api/auth/send-email-confirmation';
-    
+    const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+    const emailConfirmUrl = baseUrl.endsWith('/api') 
+      ? `${baseUrl}/auth/send-email-confirmation`
+      : `${baseUrl}/api/auth/send-email-confirmation`;
+
     axios
       
       axios.post(emailConfirmUrl, {
@@ -305,9 +314,12 @@ const useSignup = () => {
         try {
           // Try to register to check if email exists
           // We'll catch 400 errors which indicate duplicate email
-          // Strapi v4 requires /api prefix
+          // Construct URL same way as signup function
           const apiBaseUrl = String(process.env.apiUrl);
-          const checkUrl = apiBaseUrl + '/api/auth/local/register';
+          const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+          const checkUrl = baseUrl.endsWith('/api') 
+            ? `${baseUrl}/auth/local/register`
+            : `${baseUrl}/api/auth/local/register`;
           
           await axios.post(checkUrl, {
             firstName: 'Validation',
@@ -506,10 +518,14 @@ const useSignup = () => {
     loading.value = true;
 
     try {
-      // Strapi v4 requires /api prefix for all endpoints
-      // apiUrl is https://content.msmusic.edu.sg, so we need to add /api
+      // Construct endpoint URL - handle both cases where apiUrl may or may not include /api
       const apiBaseUrl = String(process.env.apiUrl);
-      const registerUrl = apiBaseUrl + '/api/auth/local/register';
+      // Remove trailing slash if present
+      const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+      // Add /api if not already present, then add the endpoint
+      const registerUrl = baseUrl.endsWith('/api') 
+        ? `${baseUrl}/auth/local/register`
+        : `${baseUrl}/api/auth/local/register`;
       
       const response: AxiosResponse<InterfaceLoginResponse> = await axios.post(registerUrl, {
         firstName: state.firstName,
@@ -525,7 +541,7 @@ const useSignup = () => {
       await login(response.data);
       
       // Reset form state
-      reset();
+        reset();
       
       // Set loading to false
       loading.value = false;
@@ -539,6 +555,26 @@ const useSignup = () => {
       const statusCode = axiosError.response?.status;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const errorData = axiosError.response?.data;
+      
+        loading.value = false;
+      
+      // Log the error for debugging
+      console.error('Registration error:', {
+        status: statusCode,
+        url: registerUrl,
+        error: errorData
+      });
+      
+      // Handle 405 Method Not Allowed - endpoint might be wrong
+      if (statusCode === 405) {
+        Notify.create({
+          type: 'negative',
+          message: 'Registration endpoint not found. Please contact support.',
+          position: 'top'
+        });
+        errors.others = 'Registration endpoint not found. Please try again or contact support.';
+        return;
+      }
       
       // For 400 errors, always show duplicate email message immediately
       // This ensures the user always sees an error message

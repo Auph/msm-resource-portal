@@ -25,7 +25,7 @@
 </div>
 <q-form
   v-else
-  @submit.prevent="signup"
+  @submit.prevent="handleSignup"
   class="login-form"
   ref="signupForm"
   >
