@@ -39,9 +39,8 @@ const fetchItems = async (
         filters: {}
       };
 
-      // Build base filters first
-      const hasBaseFilters = !categories.includes('all') || tags.length > 0 || !seriesItems.includes('all');
-      
+      // Build all filters - Strapi v4 ANDs filters at the same level by default
+      // So we can put base filters and $or at the same level
       if (!categories.includes('all')) {
         queryOptions.filters.categories = {
           id: { $in: categories }
@@ -63,32 +62,13 @@ const fetchItems = async (
       // Only add search filter if search term is not empty
       const searchTerm = search ? String(search).trim() : '';
       if (searchTerm.length > 0) {
-        // When we have both base filters and search, we need to use $and
-        // to properly combine them: (base filters) AND ($or search)
-        if (hasBaseFilters) {
-          // Store current filters
-          const currentFilters = { ...queryOptions.filters };
-          // Clear filters and rebuild with $and
-          queryOptions.filters = {
-            $and: [
-              currentFilters,
-              {
-                $or: [
-                  { title: { $containsi: searchTerm } },
-                  { description_short: { $containsi: searchTerm } },
-                  { description_long: { $containsi: searchTerm } }
-                ]
-              }
-            ]
-          };
-        } else {
-          // No base filters, just use $or for search
-          queryOptions.filters.$or = [
-            { title: { $containsi: searchTerm } },
-            { description_short: { $containsi: searchTerm } },
-            { description_long: { $containsi: searchTerm } }
-          ];
-        }
+        // Add $or filter for search - Strapi will AND this with other filters
+        // Format: filters[$or][0][title][$containsi]=value
+        queryOptions.filters.$or = [
+          { title: { $containsi: searchTerm } },
+          { description_short: { $containsi: searchTerm } },
+          { description_long: { $containsi: searchTerm } }
+        ];
       }
 
       // Ensure API URL has /api prefix if not already included
@@ -98,57 +78,24 @@ const fetchItems = async (
         : `${apiBaseUrl}/api/items`;
       
       // Build query string with proper Strapi v4 format
-      // For $and queries with nested structures, we need special handling
-      let queryString: string;
-      const hasAndQuery = queryOptions.filters.$and && Array.isArray(queryOptions.filters.$and);
-      
-      if (hasAndQuery) {
-        // Manually construct query string for $and to avoid encoding issues
-        const andArray = queryOptions.filters.$and;
-        const parts: string[] = [];
-        
-        // First element: base filters (categories, tags, series_items)
-        if (andArray[0]) {
-          const baseFiltersQuery = qs.stringify({ filters: andArray[0] }, {
-            encodeValuesOnly: true,
-            arrayFormat: 'indices',
-            allowDots: false,
-            skipNulls: true
-          });
-          // Remove 'filters' prefix and add proper $and[0] prefix
-          const baseFiltersStr = baseFiltersQuery.replace(/^filters\[/, 'filters[$and][0][');
-          parts.push(baseFiltersStr);
-        }
-        
-        // Second element: $or search conditions
-        if (andArray[1] && andArray[1].$or) {
-          const orArray = andArray[1].$or;
-          orArray.forEach((condition: any, index: number) => {
-            Object.keys(condition).forEach((field) => {
-              const operator = Object.keys(condition[field])[0];
-              const value = condition[field][operator];
-              parts.push(`filters[$and][1][$or][${index}][${field}][${operator}]=${encodeURIComponent(value)}`);
-            });
-          });
-        }
-        
-        queryString = parts.join('&');
-      } else {
-        // Simple query without $and - use standard encoding
-        queryString = qs.stringify(queryOptions, {
-          encodeValuesOnly: true,
-          arrayFormat: 'indices',
-          allowDots: false,
-          skipNulls: true
-        });
-      }
+      // Use qs.stringify with proper options for Strapi v4 API
+      const queryString = qs.stringify(queryOptions, {
+        encodeValuesOnly: true,
+        arrayFormat: 'indices',
+        allowDots: false,
+        skipNulls: true,
+        format: 'RFC1738'
+      });
       
       // Debug logging for search queries
       if (searchTerm.length > 0) {
+        console.log('=== SEARCH DEBUG ===');
         console.log('Search term:', searchTerm);
         console.log('Query options:', JSON.stringify(queryOptions, null, 2));
         console.log('Query string:', queryString);
-        console.log('Full URL:', `${itemsUrl}?populate[link]=true&populate[media]=true&populate[featured_image]=true&populate[categories][populate][0]=featured_image&populate[tags]=true&populate[collections][populate][0]=featured_image&populate[series_items]=true&${queryString}`);
+        const fullUrl = `${itemsUrl}?populate[link]=true&populate[media]=true&populate[featured_image]=true&populate[categories][populate][0]=featured_image&populate[tags]=true&populate[collections][populate][0]=featured_image&populate[series_items]=true&${queryString}`;
+        console.log('Full URL:', fullUrl);
+        console.log('===================');
       }
       
       const response: AxiosResponse<{
