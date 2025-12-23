@@ -39,35 +39,53 @@ const fetchItems = async (
         filters: {}
       };
 
-      // Build all filters
+      // Build base filters (categories, tags, series_items)
+      const baseFilters: Record<string, any> = {};
+      
       if (!categories.includes('all')) {
-        queryOptions.filters.categories = {
+        baseFilters.categories = {
           id: { $in: categories }
         };
       }
 
       if (tags.length > 0) {
-        queryOptions.filters.tags = {
+        baseFilters.tags = {
           id: { $in: tags }
         };
       }
 
       if (!seriesItems.includes('all')) {
-        queryOptions.filters.series_items = {
+        baseFilters.series_items = {
           id: { $in: seriesItems }
         };
       }
 
       // Only add search filter if search term is not empty
       const searchTerm = search ? String(search).trim() : '';
+      
       if (searchTerm.length > 0) {
-        // Add $or filter for search - Strapi v4 combines filters with AND by default
-        // So this means: (other filters) AND ($or search conditions)
-        queryOptions.filters.$or = [
-          { title: { $containsi: searchTerm } },
-          { description_short: { $containsi: searchTerm } },
-          { description_long: { $containsi: searchTerm } }
-        ];
+        // Build search conditions
+        const searchConditions = {
+          $or: [
+            { title: { $containsi: searchTerm } },
+            { description_short: { $containsi: searchTerm } },
+            { description_long: { $containsi: searchTerm } }
+          ]
+        };
+        
+        // If we have other filters, combine them with $and
+        if (Object.keys(baseFilters).length > 0) {
+          queryOptions.filters.$and = [
+            baseFilters,
+            searchConditions
+          ];
+        } else {
+          // No other filters, just use search conditions
+          queryOptions.filters = searchConditions;
+        }
+      } else {
+        // No search term, just use base filters
+        queryOptions.filters = baseFilters;
       }
 
       // Ensure API URL has /api prefix if not already included
@@ -77,10 +95,21 @@ const fetchItems = async (
         : `${apiBaseUrl}/api/items`;
       
       // Build query string with proper Strapi v4 format
+      // Use encodeValuesOnly: true to only encode values, not keys
+      // Use arrayFormat: 'brackets' for proper array encoding
       const queryString = qs.stringify(queryOptions, {
         encodeValuesOnly: true,
-        arrayFormat: 'brackets'
+        arrayFormat: 'brackets',
+        allowDots: false
       });
+      
+      // Debug logging for search queries
+      if (searchTerm.length > 0) {
+        console.log('Search term:', searchTerm);
+        console.log('Query options:', JSON.stringify(queryOptions, null, 2));
+        console.log('Query string:', queryString);
+        console.log('Full URL:', `${itemsUrl}?populate[link]=true&populate[media]=true&populate[featured_image]=true&populate[categories][populate][0]=featured_image&populate[tags]=true&populate[collections][populate][0]=featured_image&populate[series_items]=true&${queryString}`);
+      }
       
       const response: AxiosResponse<{
         data: InterfaceItem[];
