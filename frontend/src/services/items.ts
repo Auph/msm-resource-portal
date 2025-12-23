@@ -57,22 +57,32 @@ const fetchItems = async (
         };
       }
 
-      if (search.length > 0) {
+      // Only add search filter if search term is not empty
+      const searchTerm = search ? String(search).trim() : '';
+      if (searchTerm.length > 0) {
         queryOptions.filters.$or = [
-          { title: { $containsi: search } },
-          { description_short: { $containsi: search } },
-          { description_long: { $containsi: search } }
+          { title: { $containsi: searchTerm } },
+          { description_short: { $containsi: searchTerm } },
+          { description_long: { $containsi: searchTerm } }
         ];
       }
 
+      // Ensure API URL has /api prefix if not already included
+      const apiBaseUrl = String(config.apiUrl);
+      const itemsUrl = apiBaseUrl.endsWith('/api') 
+        ? `${apiBaseUrl}/items`
+        : `${apiBaseUrl}/api/items`;
+      
+      // Build query string with proper Strapi v4 format
+      const queryString = qs.stringify(queryOptions, {
+        encodeValuesOnly: true,
+        arrayFormat: 'brackets'
+      });
+      
       const response: AxiosResponse<{
         data: InterfaceItem[];
       }> = await axios.get(
-        `${
-          config.apiUrl
-        }/items?populate[link]=true&populate[media]=true&populate[featured_image]=true&populate[categories][populate][0]=featured_image&populate[tags]=true&populate[collections][populate][0]=featured_image&populate[series_items]=true&${qs.stringify(
-          queryOptions
-        )}`
+        `${itemsUrl}?populate[link]=true&populate[media]=true&populate[featured_image]=true&populate[categories][populate][0]=featured_image&populate[tags]=true&populate[collections][populate][0]=featured_image&populate[series_items]=true&${queryString}`
       );
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const items: InterfaceItem[] = response.data.data;
