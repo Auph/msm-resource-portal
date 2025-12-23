@@ -39,7 +39,9 @@ const fetchItems = async (
         filters: {}
       };
 
-      // Build all filters - Strapi v4 ANDs filters at the same level by default
+      // Build base filters first
+      const hasBaseFilters = !categories.includes('all') || tags.length > 0 || !seriesItems.includes('all');
+      
       if (!categories.includes('all')) {
         queryOptions.filters.categories = {
           id: { $in: categories }
@@ -61,12 +63,32 @@ const fetchItems = async (
       // Only add search filter if search term is not empty
       const searchTerm = search ? String(search).trim() : '';
       if (searchTerm.length > 0) {
-        // Add $or filter for search - Strapi will AND this with other filters
-        queryOptions.filters.$or = [
-          { title: { $containsi: searchTerm } },
-          { description_short: { $containsi: searchTerm } },
-          { description_long: { $containsi: searchTerm } }
-        ];
+        // When we have both base filters and search, we need to use $and
+        // to properly combine them: (base filters) AND ($or search)
+        if (hasBaseFilters) {
+          // Store current filters
+          const currentFilters = { ...queryOptions.filters };
+          // Clear filters and rebuild with $and
+          queryOptions.filters = {
+            $and: [
+              currentFilters,
+              {
+                $or: [
+                  { title: { $containsi: searchTerm } },
+                  { description_short: { $containsi: searchTerm } },
+                  { description_long: { $containsi: searchTerm } }
+                ]
+              }
+            ]
+          };
+        } else {
+          // No base filters, just use $or for search
+          queryOptions.filters.$or = [
+            { title: { $containsi: searchTerm } },
+            { description_short: { $containsi: searchTerm } },
+            { description_long: { $containsi: searchTerm } }
+          ];
+        }
       }
 
       // Ensure API URL has /api prefix if not already included
@@ -76,12 +98,14 @@ const fetchItems = async (
         : `${apiBaseUrl}/api/items`;
       
       // Build query string with proper Strapi v4 format
-      // Use encodeValuesOnly: true to only encode values, not keys
-      // Use arrayFormat: 'indices' for proper array encoding with indices
+      // For $and queries, we need to use 'brackets' format to properly encode nested arrays
+      // For simple queries, 'indices' works fine
+      const hasAndQuery = queryOptions.filters.$and && Array.isArray(queryOptions.filters.$and);
       const queryString = qs.stringify(queryOptions, {
         encodeValuesOnly: true,
-        arrayFormat: 'indices',
-        allowDots: false
+        arrayFormat: hasAndQuery ? 'brackets' : 'indices',
+        allowDots: false,
+        skipNulls: true
       });
       
       // Debug logging for search queries
