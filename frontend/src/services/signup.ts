@@ -127,7 +127,8 @@ const useSignup = () => {
     try {
       // Try to register to check if email exists
       // We'll catch 400 errors which indicate duplicate email
-      await axios.post(String(process.env.apiUrl) + '/auth/local/register', {
+      // Strapi v4 requires /api prefix
+      await axios.post(String(process.env.apiUrl) + '/api/auth/local/register', {
         firstName: state.firstName,
         lastName: state.lastName,
         username: state.email?.toLowerCase(),
@@ -213,12 +214,11 @@ const useSignup = () => {
     completed.value = false;
     loading.value = true;
 
+    // Strapi v4 requires /api prefix
+    const apiBaseUrl = String(process.env.apiUrl);
+    const emailConfirmUrl = apiBaseUrl + '/api/auth/send-email-confirmation';
+    
     axios
-      // Use /api prefix as shown in constants/endpoints.ts
-      const apiBaseUrl = String(process.env.apiUrl);
-      const emailConfirmUrl = apiBaseUrl.endsWith('/api') 
-        ? apiBaseUrl + '/auth/send-email-confirmation'
-        : apiBaseUrl + '/api/auth/send-email-confirmation';
       
       axios.post(emailConfirmUrl, {
         email: email.toLowerCase()
@@ -305,11 +305,9 @@ const useSignup = () => {
         try {
           // Try to register to check if email exists
           // We'll catch 400 errors which indicate duplicate email
-          // Use /api prefix as shown in constants/endpoints.ts
+          // Strapi v4 requires /api prefix
           const apiBaseUrl = String(process.env.apiUrl);
-          const checkUrl = apiBaseUrl.endsWith('/api') 
-            ? apiBaseUrl + '/auth/local/register'
-            : apiBaseUrl + '/api/auth/local/register';
+          const checkUrl = apiBaseUrl + '/api/auth/local/register';
           
           await axios.post(checkUrl, {
             firstName: 'Validation',
@@ -508,11 +506,10 @@ const useSignup = () => {
     loading.value = true;
 
     try {
-      // Use /api prefix as shown in constants/endpoints.ts
+      // Strapi v4 requires /api prefix for all endpoints
+      // apiUrl is https://content.msmusic.edu.sg, so we need to add /api
       const apiBaseUrl = String(process.env.apiUrl);
-      const registerUrl = apiBaseUrl.endsWith('/api') 
-        ? apiBaseUrl + '/auth/local/register'
-        : apiBaseUrl + '/api/auth/local/register';
+      const registerUrl = apiBaseUrl + '/api/auth/local/register';
       
       const response: AxiosResponse<InterfaceLoginResponse> = await axios.post(registerUrl, {
         firstName: state.firstName,
@@ -527,22 +524,16 @@ const useSignup = () => {
       const { login } = useUser();
       await login(response.data);
       
-      // Set loading to false and completed to true
-      loading.value = false;
-      completed.value = true;
-      
       // Reset form state
       reset();
       
-      // Redirect to dashboard (which redirects to /explore)
-      // Use window.location as it's more reliable than Router.push for post-registration
-      try {
-        await Router.push('/dashboard');
-      } catch (redirectError) {
-        // If Router.push fails, use window.location as fallback
-        console.error('Router.push failed, using window.location:', redirectError);
-        window.location.href = '/dashboard';
-      }
+      // Set loading to false
+      loading.value = false;
+      
+      // Redirect to dashboard immediately using window.location
+      // This bypasses router guards and ensures a full page reload
+      // which is necessary after registration to properly initialize the user session
+      window.location.href = '/dashboard';
     } catch (error) {
       const axiosError = error as AxiosError;
       const statusCode = axiosError.response?.status;

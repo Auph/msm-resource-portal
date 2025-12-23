@@ -41,7 +41,8 @@ const fetchItems = async (
 
       // Build all filters - Strapi v4 ANDs filters at the same level by default
       // So we can put base filters and $or at the same level
-      if (!categories.includes('all')) {
+      // IMPORTANT: Only add filters if they have actual values (not empty arrays)
+      if (!categories.includes('all') && categories.length > 0) {
         queryOptions.filters.categories = {
           id: { $in: categories }
         };
@@ -53,7 +54,7 @@ const fetchItems = async (
         };
       }
 
-      if (!seriesItems.includes('all')) {
+      if (!seriesItems.includes('all') && seriesItems.length > 0) {
         queryOptions.filters.series_items = {
           id: { $in: seriesItems }
         };
@@ -64,10 +65,11 @@ const fetchItems = async (
       if (searchTerm.length > 0) {
         // Add $or filter for search - Strapi will AND this with other filters
         // Format: filters[$or][0][title][$containsi]=value
+        // Note: description_long is richtext, so $containsi might not work on it
+        // We'll search title and description_short only for now
         queryOptions.filters.$or = [
           { title: { $containsi: searchTerm } },
-          { description_short: { $containsi: searchTerm } },
-          { description_long: { $containsi: searchTerm } }
+          { description_short: { $containsi: searchTerm } }
         ];
       }
 
