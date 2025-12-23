@@ -39,6 +39,7 @@ const fetchItems = async (
         filters: {}
       };
 
+      // Build all filters
       if (!categories.includes('all')) {
         queryOptions.filters.categories = {
           id: { $in: categories }
@@ -60,6 +61,8 @@ const fetchItems = async (
       // Only add search filter if search term is not empty
       const searchTerm = search ? String(search).trim() : '';
       if (searchTerm.length > 0) {
+        // Add $or filter for search - Strapi v4 combines filters with AND by default
+        // So this means: (other filters) AND ($or search conditions)
         queryOptions.filters.$or = [
           { title: { $containsi: searchTerm } },
           { description_short: { $containsi: searchTerm } },
