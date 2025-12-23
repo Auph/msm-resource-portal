@@ -98,15 +98,50 @@ const fetchItems = async (
         : `${apiBaseUrl}/api/items`;
       
       // Build query string with proper Strapi v4 format
-      // For $and queries, we need to use 'brackets' format to properly encode nested arrays
-      // For simple queries, 'indices' works fine
+      // For $and queries with nested structures, we need special handling
+      let queryString: string;
       const hasAndQuery = queryOptions.filters.$and && Array.isArray(queryOptions.filters.$and);
-      const queryString = qs.stringify(queryOptions, {
-        encodeValuesOnly: true,
-        arrayFormat: hasAndQuery ? 'brackets' : 'indices',
-        allowDots: false,
-        skipNulls: true
-      });
+      
+      if (hasAndQuery) {
+        // Manually construct query string for $and to avoid encoding issues
+        const andArray = queryOptions.filters.$and;
+        const parts: string[] = [];
+        
+        // First element: base filters (categories, tags, series_items)
+        if (andArray[0]) {
+          const baseFiltersQuery = qs.stringify({ filters: andArray[0] }, {
+            encodeValuesOnly: true,
+            arrayFormat: 'indices',
+            allowDots: false,
+            skipNulls: true
+          });
+          // Remove 'filters' prefix and add proper $and[0] prefix
+          const baseFiltersStr = baseFiltersQuery.replace(/^filters\[/, 'filters[$and][0][');
+          parts.push(baseFiltersStr);
+        }
+        
+        // Second element: $or search conditions
+        if (andArray[1] && andArray[1].$or) {
+          const orArray = andArray[1].$or;
+          orArray.forEach((condition: any, index: number) => {
+            Object.keys(condition).forEach((field) => {
+              const operator = Object.keys(condition[field])[0];
+              const value = condition[field][operator];
+              parts.push(`filters[$and][1][$or][${index}][${field}][${operator}]=${encodeURIComponent(value)}`);
+            });
+          });
+        }
+        
+        queryString = parts.join('&');
+      } else {
+        // Simple query without $and - use standard encoding
+        queryString = qs.stringify(queryOptions, {
+          encodeValuesOnly: true,
+          arrayFormat: 'indices',
+          allowDots: false,
+          skipNulls: true
+        });
+      }
       
       // Debug logging for search queries
       if (searchTerm.length > 0) {
