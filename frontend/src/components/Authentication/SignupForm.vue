@@ -98,6 +98,8 @@
         label="Password *"
         bottom-slots
         :error="errors.password !== null"
+        @input="validatePasswordMatch"
+        @blur="validatePasswordMatch"
         required
       >
         <template v-slot:error>
@@ -113,6 +115,8 @@
         label="Confirm Password *"
         bottom-slots
         :error="errors.passwordconfirm !== null"
+        @input="validatePasswordMatch"
+        @blur="validatePasswordMatch"
         required
       >
         <template v-slot:error>
@@ -179,7 +183,7 @@ export default defineComponent({
   name: 'AuthenticationSignupForm',
   setup () {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { completed, loading, state, signup, errors, validateFormBeforeProceed, checkEmailAvailability } = useSignup()
+    const { completed, loading, state, signup, errors, validateFormBeforeProceed, checkEmailAvailability, validatePasswordMatch } = useSignup()
     const step: Ref<number> = ref(1)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { 
@@ -244,7 +248,8 @@ export default defineComponent({
       step,
       handleContinue,
       canContinue,
-      checkEmailAvailability // Used in template via @input and @blur
+      checkEmailAvailability, // Used in template via @input and @blur
+      validatePasswordMatch // Used in template via @input and @blur
     }
   }
 })

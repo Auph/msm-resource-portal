@@ -380,6 +380,36 @@ const useSignup = () => {
   };
 
   /**
+   * Validates password match in real-time
+   * Called on input/blur events for password fields
+   */
+  const validatePasswordMatch = (): void => {
+    // Only validate if both fields have values
+    if (state.password && state.passwordconfirm) {
+      if (state.passwordconfirm !== state.password) {
+        errors.passwordconfirm = 'Passwords do not match';
+      } else {
+        // Clear error when passwords match
+        errors.passwordconfirm = null;
+      }
+    } else if (!state.passwordconfirm) {
+      // Clear error if confirm password is empty
+      errors.passwordconfirm = null;
+    }
+    
+    // Also validate password length
+    if (state.password) {
+      if (state.password.length < MIN_PASSWORD_LENGTH) {
+        errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`;
+      } else {
+        errors.password = null;
+      }
+    } else {
+      errors.password = null;
+    }
+  };
+
+  /**
    * Validates form fields before proceeding to next step
    * This only validates form fields, not email availability
    * Email availability should be checked separately (on blur or input)
@@ -606,7 +636,8 @@ const useSignup = () => {
     signup,
     state,
     validateFormBeforeProceed,
-    checkEmailAvailability
+    checkEmailAvailability,
+    validatePasswordMatch
   };
 };
 
