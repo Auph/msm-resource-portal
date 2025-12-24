@@ -306,8 +306,9 @@ const useSignup = () => {
         try {
           // Try to register to check if email exists
           // We'll catch 400 errors which indicate duplicate email
-          // Match authentication.ts pattern exactly
-          const checkUrl = String(process.env.apiUrl) + '/auth/local/register';
+          // Normalize apiUrl - remove trailing /api if present, then add /api for Strapi v4
+          const apiBaseUrl = String(process.env.apiUrl).replace(/\/api\/?$/, '');
+          const checkUrl = `${apiBaseUrl}/api/auth/local/register`;
           
           await axios.post(checkUrl, {
             firstName: 'Validation',
@@ -536,10 +537,9 @@ const useSignup = () => {
     loading.value = true;
 
     try {
-      // Match authentication.ts pattern exactly - use same endpoint structure
-      // Authentication uses: String(process.env.apiUrl) + '/auth/local'
-      // So registration should use: String(process.env.apiUrl) + '/auth/local/register'
-      const registerUrl = String(process.env.apiUrl) + '/auth/local/register';
+      // Normalize apiUrl - remove trailing /api if present, then add /api for Strapi v4
+      const apiBaseUrl = String(process.env.apiUrl).replace(/\/api\/?$/, '');
+      const registerUrl = `${apiBaseUrl}/api/auth/local/register`;
       
       const response: AxiosResponse<InterfaceLoginResponse> = await axios.post(registerUrl, {
         firstName: state.firstName,
