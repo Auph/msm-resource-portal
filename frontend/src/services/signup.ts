@@ -127,8 +127,12 @@ const useSignup = () => {
     try {
       // Try to register to check if email exists
       // We'll catch 400 errors which indicate duplicate email
-      // Normalize apiUrl - remove trailing /api if present, then add /api for Strapi v4
-      const apiBaseUrl = String(process.env.apiUrl).replace(/\/api\/?$/, '');
+      // Normalize apiUrl - ensure we have base URL without /api, then add /api for Strapi v4
+      let apiBaseUrl = String(process.env.apiUrl).trim();
+      apiBaseUrl = apiBaseUrl.replace(/\/+$/, '');
+      if (apiBaseUrl.endsWith('/api')) {
+        apiBaseUrl = apiBaseUrl.slice(0, -4);
+      }
       const checkUrl = `${apiBaseUrl}/api/auth/local/register`;
       
       await axios.post(checkUrl, {
@@ -217,8 +221,12 @@ const useSignup = () => {
     completed.value = false;
     loading.value = true;
 
-    // Normalize apiUrl - remove trailing /api if present, then add /api for Strapi v4
-    const apiBaseUrl = String(process.env.apiUrl).replace(/\/api\/?$/, '');
+    // Normalize apiUrl - ensure we have base URL without /api, then add /api for Strapi v4
+    let apiBaseUrl = String(process.env.apiUrl).trim();
+    apiBaseUrl = apiBaseUrl.replace(/\/+$/, '');
+    if (apiBaseUrl.endsWith('/api')) {
+      apiBaseUrl = apiBaseUrl.slice(0, -4);
+    }
     const emailConfirmUrl = `${apiBaseUrl}/api/auth/send-email-confirmation`;
 
     axios
@@ -308,8 +316,12 @@ const useSignup = () => {
         try {
           // Try to register to check if email exists
           // We'll catch 400 errors which indicate duplicate email
-          // Normalize apiUrl - remove trailing /api if present, then add /api for Strapi v4
-          const apiBaseUrl = String(process.env.apiUrl).replace(/\/api\/?$/, '');
+          // Normalize apiUrl - ensure we have base URL without /api, then add /api for Strapi v4
+          let apiBaseUrl = String(process.env.apiUrl).trim();
+          apiBaseUrl = apiBaseUrl.replace(/\/+$/, '');
+          if (apiBaseUrl.endsWith('/api')) {
+            apiBaseUrl = apiBaseUrl.slice(0, -4);
+          }
           const checkUrl = `${apiBaseUrl}/api/auth/local/register`;
           
           await axios.post(checkUrl, {
@@ -539,9 +551,22 @@ const useSignup = () => {
     loading.value = true;
 
     try {
-      // Normalize apiUrl - remove trailing /api if present, then add /api for Strapi v4
-      const apiBaseUrl = String(process.env.apiUrl).replace(/\/api\/?$/, '');
+      // Normalize apiUrl - ensure we have base URL without /api, then add /api for Strapi v4
+      let apiBaseUrl = String(process.env.apiUrl).trim();
+      // Remove trailing slash
+      apiBaseUrl = apiBaseUrl.replace(/\/+$/, '');
+      // Remove /api if it's at the end
+      if (apiBaseUrl.endsWith('/api')) {
+        apiBaseUrl = apiBaseUrl.slice(0, -4);
+      }
       const registerUrl = `${apiBaseUrl}/api/auth/local/register`;
+      
+      // Debug logging
+      console.log('Registration URL construction:', {
+        originalApiUrl: process.env.apiUrl,
+        normalizedBaseUrl: apiBaseUrl,
+        finalUrl: registerUrl
+      });
       
       const response: AxiosResponse<InterfaceLoginResponse> = await axios.post(registerUrl, {
         firstName: state.firstName,
