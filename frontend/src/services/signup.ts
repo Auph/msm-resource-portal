@@ -154,8 +154,8 @@ const useSignup = () => {
     try {
       // Try to register to check if email exists
       // We'll catch 400 errors which indicate duplicate email
-      const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
-      const checkUrl = `${apiBaseUrl}/api/auth/local/register`;
+      // Match authentication.ts pattern exactly
+      const checkUrl = String(process.env.apiUrl) + '/auth/local/register';
       
       await axios.post(checkUrl, {
         firstName: state.firstName,
@@ -243,9 +243,8 @@ const useSignup = () => {
     completed.value = false;
     loading.value = true;
 
-    // Normalize apiUrl and construct email confirmation endpoint
-    const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
-    const emailConfirmUrl = `${apiBaseUrl}/api/auth/send-email-confirmation`;
+    // Match authentication.ts pattern exactly
+    const emailConfirmUrl = String(process.env.apiUrl) + '/auth/send-email-confirmation';
 
     axios
       
@@ -334,9 +333,8 @@ const useSignup = () => {
         try {
           // Try to register to check if email exists
           // We'll catch 400 errors which indicate duplicate email
-          // Normalize apiUrl and construct check endpoint
-          const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
-          const checkUrl = `${apiBaseUrl}/api/auth/local/register`;
+          // Match authentication.ts pattern exactly
+          const checkUrl = String(process.env.apiUrl) + '/auth/local/register';
           
           await axios.post(checkUrl, {
             firstName: 'Validation',
@@ -565,15 +563,15 @@ const useSignup = () => {
     loading.value = true;
 
     try {
-      // Normalize apiUrl and construct registration endpoint
-      const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
-      const registerUrl = `${apiBaseUrl}/api/auth/local/register`;
+      // Match authentication.ts pattern exactly - use same endpoint structure
+      // Authentication uses: String(process.env.apiUrl) + '/auth/local'
+      // So registration should use: String(process.env.apiUrl) + '/auth/local/register'
+      const registerUrl = String(process.env.apiUrl) + '/auth/local/register';
       
       // Debug logging
-      console.log('Registration URL construction:', {
-        originalApiUrl: process.env.apiUrl,
-        normalizedBaseUrl: apiBaseUrl,
-        finalUrl: registerUrl
+      console.error('🔍 Registration URL Debug:', {
+        'apiUrl': process.env.apiUrl,
+        'finalUrl': registerUrl
       });
       
       const response: AxiosResponse<InterfaceLoginResponse> = await axios.post(registerUrl, {
