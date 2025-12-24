@@ -127,8 +127,9 @@ const useSignup = () => {
     try {
       // Try to register to check if email exists
       // We'll catch 400 errors which indicate duplicate email
-      // Match authentication.ts pattern exactly
-      const checkUrl = String(process.env.apiUrl) + '/auth/local/register';
+      // Normalize apiUrl - remove trailing /api if present, then add /api for Strapi v4
+      const apiBaseUrl = String(process.env.apiUrl).replace(/\/api\/?$/, '');
+      const checkUrl = `${apiBaseUrl}/api/auth/local/register`;
       
       await axios.post(checkUrl, {
         firstName: state.firstName,
@@ -216,8 +217,9 @@ const useSignup = () => {
     completed.value = false;
     loading.value = true;
 
-    // Match authentication.ts pattern exactly
-    const emailConfirmUrl = String(process.env.apiUrl) + '/auth/send-email-confirmation';
+    // Normalize apiUrl - remove trailing /api if present, then add /api for Strapi v4
+    const apiBaseUrl = String(process.env.apiUrl).replace(/\/api\/?$/, '');
+    const emailConfirmUrl = `${apiBaseUrl}/api/auth/send-email-confirmation`;
 
     axios
       
