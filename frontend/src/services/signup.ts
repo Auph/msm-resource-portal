@@ -562,17 +562,18 @@ const useSignup = () => {
     resetErrors();
     loading.value = true;
 
+    // Match authentication.ts pattern exactly - use same endpoint structure
+    // Authentication uses: String(process.env.apiUrl) + '/auth/local'
+    // So registration should use: String(process.env.apiUrl) + '/auth/local/register'
+    const registerUrl = String(process.env.apiUrl) + '/auth/local/register';
+    
+    // Debug logging
+    console.error('🔍 Registration URL Debug:', {
+      'apiUrl': process.env.apiUrl,
+      'finalUrl': registerUrl
+    });
+
     try {
-      // Match authentication.ts pattern exactly - use same endpoint structure
-      // Authentication uses: String(process.env.apiUrl) + '/auth/local'
-      // So registration should use: String(process.env.apiUrl) + '/auth/local/register'
-      const registerUrl = String(process.env.apiUrl) + '/auth/local/register';
-      
-      // Debug logging
-      console.error('🔍 Registration URL Debug:', {
-        'apiUrl': process.env.apiUrl,
-        'finalUrl': registerUrl
-      });
       
       const response: AxiosResponse<InterfaceLoginResponse> = await axios.post(registerUrl, {
         firstName: state.firstName,
