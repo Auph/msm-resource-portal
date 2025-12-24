@@ -23,12 +23,9 @@
     <a :href="`/verify-email?email=${state.email}`" class="text-accent text-bold" style="text-decoration: none">Resend Email</a>
   </q-card>
 </div>
-<q-form
+<div
   v-else
-  @submit.prevent.stop="handleSignup"
   class="login-form"
-  ref="signupForm"
-  :no-error-focus="true"
   >
   <q-stepper
     flat
