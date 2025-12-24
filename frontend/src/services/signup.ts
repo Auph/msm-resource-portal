@@ -14,15 +14,27 @@ import { useUser } from './user';
 /**
  * Normalizes the API base URL by removing trailing /api if present
  * This ensures we can consistently add /api prefix for Strapi v4 endpoints
+ * 
+ * Handles cases where apiUrl might be:
+ * - https://content.msmusic.edu.sg (no /api)
+ * - https://content.msmusic.edu.sg/ (trailing slash)
+ * - https://content.msmusic.edu.sg/api (with /api)
+ * - https://content.msmusic.edu.sg/api/ (with /api and trailing slash)
  */
 const normalizeApiUrl = (apiUrl: string): string => {
   let normalized = String(apiUrl).trim();
-  // Remove trailing slashes
+  
+  // Remove all trailing slashes first
   normalized = normalized.replace(/\/+$/, '');
-  // Remove /api if it's at the end
-  if (normalized.endsWith('/api')) {
+  
+  // Remove /api if it's at the end (case-insensitive check)
+  const lowerNormalized = normalized.toLowerCase();
+  if (lowerNormalized.endsWith('/api')) {
     normalized = normalized.slice(0, -4);
+    // Remove any trailing slashes that might remain
+    normalized = normalized.replace(/\/+$/, '');
   }
+  
   return normalized;
 };
 
