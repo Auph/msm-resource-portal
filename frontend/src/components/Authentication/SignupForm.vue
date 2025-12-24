@@ -25,9 +25,10 @@
 </div>
 <q-form
   v-else
-  @submit.prevent="handleSignup"
+  @submit.prevent.stop="handleSignup"
   class="login-form"
   ref="signupForm"
+  :no-error-focus="true"
   >
   <q-stepper
     flat
@@ -154,7 +155,7 @@
 
     <template v-slot:navigation>
       <q-stepper-navigation>
-        <q-btn unelevated class="q-py-xs q-px-sm" color="accent" v-if="step > 1" label="Create Account" type="submit" />
+        <q-btn unelevated class="q-py-xs q-px-sm" color="accent" v-if="step > 1" label="Create Account" @click="handleSignup" :loading="loading" />
         <q-btn 
           unelevated 
           class="q-py-xs q-px-sm" 
@@ -169,7 +170,7 @@
       </q-stepper-navigation>
     </template>
   </q-stepper>
-</q-form>
+</div>
 </template>
 
 <script lang="ts">
