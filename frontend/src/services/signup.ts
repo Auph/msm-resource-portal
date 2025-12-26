@@ -154,8 +154,9 @@ const useSignup = () => {
     try {
       // Try to register to check if email exists
       // We'll catch 400 errors which indicate duplicate email
-      // Match authentication.ts pattern exactly
-      const checkUrl = String(process.env.apiUrl) + '/auth/local/register';
+      // Normalize apiUrl and construct endpoint
+      const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
+      const checkUrl = `${apiBaseUrl}/api/auth/local/register`;
       
       await axios.post(checkUrl, {
         firstName: state.firstName,
@@ -243,12 +244,12 @@ const useSignup = () => {
     completed.value = false;
     loading.value = true;
 
-    // Match authentication.ts pattern exactly
-    const emailConfirmUrl = String(process.env.apiUrl) + '/auth/send-email-confirmation';
+    // Normalize apiUrl and construct endpoint
+    const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
+    const emailConfirmUrl = `${apiBaseUrl}/api/auth/send-email-confirmation`;
 
     axios
-      
-      axios.post(emailConfirmUrl, {
+      .post(emailConfirmUrl, {
         email: email.toLowerCase()
       })
       .then(() => {
@@ -333,8 +334,9 @@ const useSignup = () => {
         try {
           // Try to register to check if email exists
           // We'll catch 400 errors which indicate duplicate email
-          // Match authentication.ts pattern exactly
-          const checkUrl = String(process.env.apiUrl) + '/auth/local/register';
+          // Normalize apiUrl and construct endpoint
+          const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
+          const checkUrl = `${apiBaseUrl}/api/auth/local/register`;
           
           await axios.post(checkUrl, {
             firstName: 'Validation',
@@ -562,14 +564,15 @@ const useSignup = () => {
     resetErrors();
     loading.value = true;
 
-    // Match authentication.ts pattern exactly - use same endpoint structure
-    // Authentication uses: String(process.env.apiUrl) + '/auth/local'
-    // So registration should use: String(process.env.apiUrl) + '/auth/local/register'
-    const registerUrl = String(process.env.apiUrl) + '/auth/local/register';
+    // Normalize apiUrl and construct registration endpoint
+    // This ensures we handle cases where apiUrl might already include /api
+    const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
+    const registerUrl = `${apiBaseUrl}/api/auth/local/register`;
     
     // Debug logging
     console.error('🔍 Registration URL Debug:', {
-      'apiUrl': process.env.apiUrl,
+      'originalApiUrl': process.env.apiUrl,
+      'normalizedBaseUrl': apiBaseUrl,
       'finalUrl': registerUrl
     });
 
