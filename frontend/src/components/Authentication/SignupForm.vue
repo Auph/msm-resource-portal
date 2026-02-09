@@ -198,12 +198,16 @@ export default defineComponent({
 
     // Wrapper to ensure errors are caught
     const handleSignup = async (): Promise<void> => {
+      console.error('🟢 CREATE ACCOUNT BUTTON CLICKED - handleSignup called');
+      console.log('🟢 CREATE ACCOUNT BUTTON CLICKED - handleSignup called');
       try {
+        console.error('🟢 Calling signup() function...');
         await signup()
+        console.error('🟢 signup() completed without throwing');
       } catch (error) {
         // This should not happen as signup handles its own errors,
         // but just in case, show a generic error
-        console.error('Unexpected error in signup:', error)
+        console.error('❌ Unexpected error in signup wrapper:', error)
       }
     }
 

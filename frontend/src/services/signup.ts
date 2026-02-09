@@ -536,9 +536,10 @@ const useSignup = () => {
    * Signs up the user
    */
   const signup = async (): Promise<void> => {
-    // Log function entry immediately
-    console.error('🔵 SIGNUP FUNCTION CALLED');
-    console.log('🔵 SIGNUP FUNCTION CALLED');
+    // Log function entry immediately - VERSION 2.0 with enhanced logging
+    console.error('🔵 SIGNUP FUNCTION CALLED - VERSION 2.0');
+    console.log('🔵 SIGNUP FUNCTION CALLED - VERSION 2.0');
+    console.warn('🔵 SIGNUP FUNCTION CALLED - VERSION 2.0');
     
     // Validate first
     if (!signupValidation()) {
