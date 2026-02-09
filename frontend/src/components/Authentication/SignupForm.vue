@@ -156,18 +156,19 @@
 
     <template v-slot:navigation>
       <q-stepper-navigation>
-        <q-btn unelevated class="q-py-xs q-px-sm" color="accent" v-if="step > 1" label="Create Account" @click="handleSignup" :loading="loading" />
-        <q-btn 
-          unelevated 
-          class="q-py-xs q-px-sm" 
-          color="accent" 
-          v-else 
-          @click="handleContinue" 
+        <q-btn type="button" unelevated class="q-py-xs q-px-sm" color="accent" v-if="step > 1" label="Create Account" @click="handleSignup" :loading="loading" />
+        <q-btn
+          type="button"
+          unelevated
+          class="q-py-xs q-px-sm"
+          color="accent"
+          v-else
+          @click="handleContinue"
           :label="'Continue'"
           :disable="!canContinue() || loading"
           :loading="loading"
         />
-        <q-btn unelevated class="q-py-xs" v-if="step > 1" flat color="accent" @click="$refs.stepper.previous()" label="Back" />
+        <q-btn type="button" unelevated class="q-py-xs" v-if="step > 1" flat color="accent" @click="$refs.stepper.previous()" label="Back" />
       </q-stepper-navigation>
     </template>
   </q-stepper>

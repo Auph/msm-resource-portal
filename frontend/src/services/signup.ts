@@ -12,30 +12,13 @@ import { Router } from 'src/router';
 import { useUser } from './user';
 
 /**
- * Normalizes the API base URL by removing trailing /api if present
- * This ensures we can consistently add /api prefix for Strapi v4 endpoints
- * 
- * Handles cases where apiUrl might be:
- * - https://content.msmusic.edu.sg (no /api)
- * - https://content.msmusic.edu.sg/ (trailing slash)
- * - https://content.msmusic.edu.sg/api (with /api)
- * - https://content.msmusic.edu.sg/api/ (with /api and trailing slash)
+ * Builds the API base URL for auth endpoints.
+ * Uses the same pattern as authentication.ts: apiUrl is used as-is (no extra /api).
+ * This avoids double /api when apiUrl already includes it (e.g. in production).
  */
-const normalizeApiUrl = (apiUrl: string): string => {
-  let normalized = String(apiUrl).trim();
-  
-  // Remove all trailing slashes first
-  normalized = normalized.replace(/\/+$/, '');
-  
-  // Remove /api if it's at the end (case-insensitive check)
-  const lowerNormalized = normalized.toLowerCase();
-  if (lowerNormalized.endsWith('/api')) {
-    normalized = normalized.slice(0, -4);
-    // Remove any trailing slashes that might remain
-    normalized = normalized.replace(/\/+$/, '');
-  }
-  
-  return normalized;
+const getAuthBaseUrl = (): string => {
+  const url = String(process.env.apiUrl ?? '').trim();
+  return url.replace(/\/+$/, '');
 };
 
 // Constants
@@ -154,10 +137,9 @@ const useSignup = () => {
     try {
       // Try to register to check if email exists
       // We'll catch 400 errors which indicate duplicate email
-      // Normalize apiUrl and construct endpoint
-      const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
-      const checkUrl = `${apiBaseUrl}/api/auth/local/register`;
-      
+      const baseUrl = getAuthBaseUrl();
+      const checkUrl = `${baseUrl}/auth/local/register`;
+
       await axios.post(checkUrl, {
         firstName: state.firstName,
         lastName: state.lastName,
@@ -244,9 +226,8 @@ const useSignup = () => {
     completed.value = false;
     loading.value = true;
 
-    // Normalize apiUrl and construct endpoint
-    const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
-    const emailConfirmUrl = `${apiBaseUrl}/api/auth/send-email-confirmation`;
+    const baseUrl = getAuthBaseUrl();
+    const emailConfirmUrl = `${baseUrl}/auth/send-email-confirmation`;
 
     axios
       .post(emailConfirmUrl, {
@@ -334,10 +315,9 @@ const useSignup = () => {
         try {
           // Try to register to check if email exists
           // We'll catch 400 errors which indicate duplicate email
-          // Normalize apiUrl and construct endpoint
-          const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
-          const checkUrl = `${apiBaseUrl}/api/auth/local/register`;
-          
+          const baseUrl = getAuthBaseUrl();
+          const checkUrl = `${baseUrl}/auth/local/register`;
+
           await axios.post(checkUrl, {
             firstName: 'Validation',
             lastName: 'Check',
@@ -564,20 +544,10 @@ const useSignup = () => {
     resetErrors();
     loading.value = true;
 
-    // Normalize apiUrl and construct registration endpoint
-    // This ensures we handle cases where apiUrl might already include /api
-    const apiBaseUrl = normalizeApiUrl(String(process.env.apiUrl));
-    const registerUrl = `${apiBaseUrl}/api/auth/local/register`;
-    
-    // Debug logging
-    console.error('🔍 Registration URL Debug:', {
-      'originalApiUrl': process.env.apiUrl,
-      'normalizedBaseUrl': apiBaseUrl,
-      'finalUrl': registerUrl
-    });
+    const baseUrl = getAuthBaseUrl();
+    const registerUrl = `${baseUrl}/auth/local/register`;
 
     try {
-      
       const response: AxiosResponse<InterfaceLoginResponse> = await axios.post(registerUrl, {
         firstName: state.firstName,
         lastName: state.lastName,
