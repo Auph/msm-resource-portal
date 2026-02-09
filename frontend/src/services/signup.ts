@@ -579,10 +579,11 @@ const useSignup = () => {
       
         loading.value = false;
       
-      // Log the error for debugging
+      // Log the error for debugging (errorData is axios response payload, typed as any)
       console.error('Registration error:', {
         status: statusCode,
         url: registerUrl,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         error: errorData
       });
       
