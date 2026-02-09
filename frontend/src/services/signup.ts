@@ -557,12 +557,41 @@ const useSignup = () => {
         password: state.password
       });
       
+      // Log successful registration response for debugging
+      console.log('✅ Registration successful:', {
+        status: response.status,
+        hasJwt: !!response.data?.jwt,
+        hasUser: !!response.data?.user,
+        userId: response.data?.user?.id,
+        email: response.data?.user?.email,
+        responseData: response.data
+      });
+      
+      // Verify response structure matches expected format
+      if (!response.data || !response.data.jwt || !response.data.user) {
+        console.error('❌ Invalid registration response structure:', response.data);
+        throw new Error('Invalid registration response: missing jwt or user data');
+      }
+      
       // Save user profile (JWT and user data) like login does
-      const { login } = useUser();
-      await login(response.data);
+      try {
+        const { login } = useUser();
+        await login(response.data);
+        console.log('✅ User login successful, redirecting to dashboard...');
+      } catch (loginError) {
+        // If login fails, log but still try to redirect (user is registered)
+        console.error('❌ Error during user login after registration:', loginError);
+        // Show error but don't block redirect - account was created
+        Notify.create({
+          type: 'warning',
+          message: 'Account created but session initialization failed. Please try logging in.',
+          position: 'top',
+          timeout: 5000
+        });
+      }
       
       // Reset form state
-        reset();
+      reset();
       
       // Set loading to false
       loading.value = false;
