@@ -198,6 +198,8 @@ export default defineComponent({
 
     // Wrapper to ensure errors are caught
     const handleSignup = async (): Promise<void> => {
+      // ALERT TEST - Remove after confirming deployment
+      alert('CREATE ACCOUNT BUTTON CLICKED - NEW CODE VERSION 2.1');
       console.error('🟢 CREATE ACCOUNT BUTTON CLICKED - handleSignup called');
       console.log('🟢 CREATE ACCOUNT BUTTON CLICKED - handleSignup called');
       try {
