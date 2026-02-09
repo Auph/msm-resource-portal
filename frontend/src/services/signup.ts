@@ -536,8 +536,13 @@ const useSignup = () => {
    * Signs up the user
    */
   const signup = async (): Promise<void> => {
+    // Log function entry immediately
+    console.error('🔵 SIGNUP FUNCTION CALLED');
+    console.log('🔵 SIGNUP FUNCTION CALLED');
+    
     // Validate first
     if (!signupValidation()) {
+      console.error('❌ Signup validation failed');
       return;
     }
 
@@ -547,6 +552,11 @@ const useSignup = () => {
     const baseUrl = getAuthBaseUrl();
     const registerUrl = `${baseUrl}/auth/local/register`;
 
+    console.error('🚀 Starting registration:', {
+      url: registerUrl,
+      email: state.email,
+      hasInterests: Array.isArray(state.interests) && state.interests.length > 0
+    });
     console.log('🚀 Starting registration:', {
       url: registerUrl,
       email: state.email,
@@ -563,6 +573,12 @@ const useSignup = () => {
         password: state.password
       });
       
+      console.error('📦 Raw response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        data: response.data
+      });
       console.log('📦 Raw response received:', {
         status: response.status,
         statusText: response.statusText,
@@ -571,6 +587,14 @@ const useSignup = () => {
       });
       
       // Log successful registration response for debugging
+      console.error('✅ Registration successful:', {
+        status: response.status,
+        hasJwt: !!response.data?.jwt,
+        hasUser: !!response.data?.user,
+        userId: response.data?.user?.id,
+        email: response.data?.user?.email,
+        responseData: response.data
+      });
       console.log('✅ Registration successful:', {
         status: response.status,
         hasJwt: !!response.data?.jwt,
@@ -590,6 +614,7 @@ const useSignup = () => {
       try {
         const { login } = useUser();
         await login(response.data);
+        console.error('✅ User login successful, redirecting to dashboard...');
         console.log('✅ User login successful, redirecting to dashboard...');
       } catch (loginError) {
         // If login fails, log but still try to redirect (user is registered)
@@ -612,6 +637,7 @@ const useSignup = () => {
       // Redirect to dashboard immediately using window.location
       // This bypasses router guards and ensures a full page reload
       // which is necessary after registration to properly initialize the user session
+      console.error('🔄 Redirecting to dashboard...');
       console.log('🔄 Redirecting to dashboard...');
       window.location.href = '/dashboard';
     } catch (error) {
