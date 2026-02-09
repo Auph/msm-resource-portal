@@ -547,6 +547,12 @@ const useSignup = () => {
     const baseUrl = getAuthBaseUrl();
     const registerUrl = `${baseUrl}/auth/local/register`;
 
+    console.log('🚀 Starting registration:', {
+      url: registerUrl,
+      email: state.email,
+      hasInterests: Array.isArray(state.interests) && state.interests.length > 0
+    });
+
     try {
       const response: AxiosResponse<InterfaceLoginResponse> = await axios.post(registerUrl, {
         firstName: state.firstName,
@@ -555,6 +561,13 @@ const useSignup = () => {
         username: state.email?.toLowerCase(),
         email: state.email?.toLowerCase(),
         password: state.password
+      });
+      
+      console.log('📦 Raw response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        data: response.data
       });
       
       // Log successful registration response for debugging
@@ -599,21 +612,31 @@ const useSignup = () => {
       // Redirect to dashboard immediately using window.location
       // This bypasses router guards and ensures a full page reload
       // which is necessary after registration to properly initialize the user session
+      console.log('🔄 Redirecting to dashboard...');
       window.location.href = '/dashboard';
     } catch (error) {
+      loading.value = false;
+      
+      // Log comprehensive error details
+      console.error('❌ Registration error caught:', {
+        error,
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        isAxiosError: axios.isAxiosError(error)
+      });
+      
       const axiosError = error as AxiosError;
       const statusCode = axiosError.response?.status;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const errorData = axiosError.response?.data;
       
-        loading.value = false;
-      
       // Log the error for debugging (errorData is axios response payload, typed as any)
-      console.error('Registration error:', {
+      console.error('❌ Registration API error details:', {
         status: statusCode,
         url: registerUrl,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        error: errorData
+        error: errorData,
+        responseHeaders: axiosError.response?.headers
       });
       
       // Handle 405 Method Not Allowed - endpoint might be wrong
